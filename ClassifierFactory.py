@@ -74,12 +74,13 @@ class ClassifierFactory:
         - Timestamp(break into 3 groups: morning, noon, evening)
         '''
 
-        # Test area, check features count and names.
+        ################ Test area, check features count and names. ###################
         try:
             checkFeautureTable = features.fit(self.annotated_data.data)
             featursNames = textLengthTransformer.get_feature_names() + count_vect.get_feature_names()
         except Exception as inst:
             print("OS error: {0}".format(inst))
+        ################################################################################3
 
         pipeline = Pipeline([
           ('features', features),
