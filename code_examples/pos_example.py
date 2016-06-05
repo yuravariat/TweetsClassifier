@@ -3,7 +3,9 @@ import nltk
 #test pos
 #nltk.download()
 
-words = ['is', 'table','apple','are','tree','run','running','sit']
+text = 'is table apple are tree run running sit'
+#words = ['is', 'table','apple','are','tree','run','running','sit']
+words = nltk.wordpunct_tokenize(text)
 pos_window = nltk.pos_tag(words)
 
 tag_fd = nltk.FreqDist(tag for (word, tag) in pos_window)

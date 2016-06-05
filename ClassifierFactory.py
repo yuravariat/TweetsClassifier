@@ -9,9 +9,11 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline, FeatureUnion
 
 from PreProcessor import PreProccessor
-from Transformers import TextLengthTransformer
 
 from enum import Enum
+
+from Transformers.TextLengthTransformer import TextLengthTransformer
+from Transformers.PosTransformer import PosTransformer
 
 '''
 Enum of Classifier types
@@ -26,6 +28,7 @@ ClassifierFactory.
 class ClassifierFactory:
     annotated_data = None
     classifier_type = None
+
     '''
     annotated_data: tweets with related category.
     classifier_type: which classifier to use.
@@ -39,7 +42,8 @@ class ClassifierFactory:
 
         if annotated_data is None:
             # insert some test annotated data
-            categories = ['alt.atheism', 'soc.religion.christian', 'comp.graphics', 'sci.med']
+            #categories = ['alt.atheism', 'soc.religion.christian', 'comp.graphics', 'sci.med']
+            categories = ['soc.religion.christian', 'comp.graphics']
             self.annotated_data = fetch_20newsgroups(subset='train', categories=categories, shuffle=True, random_state=42)
         else:
             self.annotated_data = annotated_data
@@ -54,14 +58,26 @@ class ClassifierFactory:
 
         # text length transformer
         textLengthTransformer = TextLengthTransformer()
+        
+        # POS transformer
+        posTransformer = PosTransformer()
 
-        features = FeatureUnion([
-            ('text_length', textLengthTransformer),
-            ('ngram_tf_idf', Pipeline([
-              ('counts', count_vect),
-              ('tf_idf', tfidf_transformer)
-            ]))
-        ])
+        features = FeatureUnion(
+            transformer_list=[
+                ('text_length', textLengthTransformer),
+                #('part_of_speech', posTransformer),
+                ('ngram_tf_idf', Pipeline([
+                  ('counts', count_vect),
+                  ('tf_idf', tfidf_transformer)
+                ]))
+            ],
+            # weight components in FeatureUnion
+            transformer_weights={
+                'text_length': 1.0,
+                #'part_of_speech': 1.0,
+                'ngram_tf_idf': 1.0,
+            }
+        )
 
         ''' =============== Features to add =========================
         - Hashtags
@@ -75,11 +91,13 @@ class ClassifierFactory:
         '''
 
         ################ Test area, check features count and names. ###################
-        try:
-            checkFeautureTable = features.fit(self.annotated_data.data)
-            featursNames = textLengthTransformer.get_feature_names() + count_vect.get_feature_names()
-        except Exception as inst:
-            print("OS error: {0}".format(inst))
+        #try:
+        #    checkFeautureTable = features.fit(self.annotated_data.data)
+        #    featuresNames = textLengthTransformer.get_feature_names() + \
+        #                   posTransformer.get_feature_names() + \
+        #                   count_vect.get_feature_names()
+        #except Exception as inst:
+        #    print("OS error: {0}".format(inst))
         ################################################################################3
 
         pipeline = Pipeline([
@@ -89,9 +107,26 @@ class ClassifierFactory:
 
         # Actually builds the classifier
         classifier = pipeline.fit(self.annotated_data.data, self.annotated_data.target)
-        return classifier
+        classifier_cont = Classifier()
+        classifier_cont.classifier = classifier
+        classifier_cont.labels = self.annotated_data.target_names
+        return classifier_cont
+'''
+Classifier container
+'''
+class Classifier:
+    classifier = None
+    labels = None
 
-# test
+# Build classifier test
 classifierBuilder = ClassifierFactory()
-classifier = classifierBuilder.buildClassifier()
+clf = classifierBuilder.buildClassifier()
+
+# Prediction
+docs_new = ['God is love', 'OpenGL on the GPU is fast']
+predicted = clf.classifier.predict(docs_new)
+
+for doc, category in zip(docs_new, predicted):
+    print('%r => %s' % (doc, clf.labels[category]))
+
 rrr=1
