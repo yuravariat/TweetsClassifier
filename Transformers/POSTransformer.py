@@ -1,12 +1,26 @@
-from pandas import DataFrame
+from pandas import DataFrame, np
 from sklearn.base import TransformerMixin
+import nltk
 
 
-class POSTransformer(TransformerMixin):
-
+class PosTransformer(TransformerMixin):
     def transform(self, X, **transform_params):
-        lengths = DataFrame(map(lambda x: len(x),X))
-        return lengths
+
+        numpy_table = np.zeros((len(X), len(self.allTags)))
+
+        for row_num, tweet in enumerate(X):
+            words = nltk.wordpunct_tokenize(tweet)
+            pos_window = nltk.pos_tag(words)
+            tag_fd = nltk.FreqDist(tag for (word, tag) in pos_window)
+            for tag in tag_fd:
+                if tag in self.allTags:
+                    indexOfTag = self.allTags.index(tag)
+                    if indexOfTag > -1:
+                        numpy_table[row_num, indexOfTag] = tag_fd[tag]
+
+        data_table = DataFrame(numpy_table, columns=self.allTags)
+
+        return data_table
 
     def fit(self, X, y=None, **fit_params):
         return self
@@ -52,3 +66,8 @@ class POSTransformer(TransformerMixin):
         'WP$',  # Possessive wh-pronoun
         'WRB',  # Wh-adverb
     ]
+
+    # posTransformer = POSTransformer()
+    # frame = DataFrame(np.zeros((2252, len(posTransformer.allTags))), columns=posTransformer.allTags)
+
+    # stop = 5
