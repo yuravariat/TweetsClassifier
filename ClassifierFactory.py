@@ -65,16 +65,16 @@ class ClassifierFactory:
         features = FeatureUnion(
             transformer_list=[
                 ('text_length', textLengthTransformer),
-                #('part_of_speech', posTransformer),
+                ('part_of_speech', posTransformer),
                 ('ngram_tf_idf', Pipeline([
                   ('counts', count_vect),
-                  ('tf_idf', tfidf_transformer)
+                  #('tf_idf', tfidf_transformer)
                 ]))
             ],
             # weight components in FeatureUnion
             transformer_weights={
                 'text_length': 1.0,
-                #'part_of_speech': 1.0,
+                'part_of_speech': 1.0,
                 'ngram_tf_idf': 1.0,
             }
         )
@@ -96,9 +96,10 @@ class ClassifierFactory:
         #    featuresNames = textLengthTransformer.get_feature_names() + \
         #                   posTransformer.get_feature_names() + \
         #                   count_vect.get_feature_names()
+        #    numpyTable = checkFeautureTable.transform(self.annotated_data.data)
         #except Exception as inst:
         #    print("OS error: {0}".format(inst))
-        ################################################################################3
+        #################################################################################
 
         pipeline = Pipeline([
           ('features', features),
