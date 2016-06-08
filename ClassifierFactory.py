@@ -12,6 +12,7 @@ from PreProcessor import PreProccessor
 
 from enum import Enum
 
+from Transformers import HasEmoticonsTransformer
 from Transformers.HasUrlTransformer import HasUrlTransformer
 from Transformers.TextLengthTransformer import TextLengthTransformer
 from Transformers.PosTransformer import PosTransformer
@@ -34,6 +35,7 @@ class ClassifierFactory:
     __enable_url_transformer = True
     __enable_pos_transformer = False
     __enable_ngrams_transformer = True
+    __enable_emoticons_transformer = True
 
     '''
     annotated_data: tweets with related category.
@@ -64,6 +66,7 @@ class ClassifierFactory:
         text_length_transformer = None
         has_url_transformer = None
         pos_transformer = None
+        emoticons_transformer = None
 
         transformers_list = []
         if self.__enable_text_length_transformer:
@@ -72,6 +75,9 @@ class ClassifierFactory:
         if self.__enable_url_transformer:
             has_url_transformer = HasUrlTransformer()
             transformers_list.append(('has_url', has_url_transformer))
+        if self.__enable_emoticons_transformer:
+            emoticons_transformer = HasEmoticonsTransformer
+            transformers_list.append(('has_emoticons', emoticons_transformer))
         if self.__enable_pos_transformer:
             pos_transformer = PosTransformer()
             transformers_list.append(('part_of_speech', pos_transformer))
@@ -112,6 +118,8 @@ class ClassifierFactory:
         #        features_names.append(text_length_transformer.get_feature_names())
         #    if self.__enable_url_transformer:
         #        features_names.append(has_url_transformer.get_feature_names())
+        #    if self.__enable_emoticons_transformer:
+        #        features_names.append(emoticons_transformer.get_feature_names())
         #    if self.__enable_pos_transformer:
         #        features_names.append(pos_transformer.get_feature_names())
         #    if self.__enable_ngrams_transformer:
