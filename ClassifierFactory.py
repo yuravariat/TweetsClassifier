@@ -12,6 +12,7 @@ from PreProcessor import PreProccessor
 
 from enum import Enum
 
+from Transformers.HasUrlTransformer import HasUrlTransformer
 from Transformers.TextLengthTransformer import TextLengthTransformer
 from Transformers.PosTransformer import PosTransformer
 
@@ -29,6 +30,11 @@ class ClassifierFactory:
     annotated_data = None
     classifier_type = None
 
+    __enable_text_length_transformer = True
+    __enable_url_transformer = True
+    __enable_pos_transformer = False
+    __enable_ngrams_transformer = True
+
     '''
     annotated_data: tweets with related category.
     classifier_type: which classifier to use.
@@ -40,6 +46,7 @@ class ClassifierFactory:
         else:
             self.classifier_type = classifier_type
 
+        # Annotated data
         if annotated_data is None:
             # insert some test annotated data
             #categories = ['alt.atheism', 'soc.religion.christian', 'comp.graphics', 'sci.med']
@@ -52,31 +59,39 @@ class ClassifierFactory:
         preproccessor = PreProccessor()
         preproccessor.Perform(self.annotated_data.data)
 
-        # Tokenizer unigram and bigram tokens (ngram_range=(1, 2)). Stop words removed (stop_words='english')
-        count_vect = CountVectorizer(ngram_range=(1, 2),stop_words='english')
-        tfidf_transformer = TfidfTransformer()
+        count_vect = None
+        tfidf_transformer = None
+        text_length_transformer = None
+        has_url_transformer = None
+        pos_transformer = None
 
-        # text length transformer
-        textLengthTransformer = TextLengthTransformer()
-        
-        # POS transformer
-        posTransformer = PosTransformer()
+        transformers_list = []
+        if self.__enable_text_length_transformer:
+            text_length_transformer = TextLengthTransformer()
+            transformers_list.append(('text_length', text_length_transformer))
+        if self.__enable_url_transformer:
+            has_url_transformer = HasUrlTransformer()
+            transformers_list.append(('has_url', has_url_transformer))
+        if self.__enable_pos_transformer:
+            pos_transformer = PosTransformer()
+            transformers_list.append(('part_of_speech', pos_transformer))
+        if self.__enable_ngrams_transformer:
+            # Tokenizer unigram and bigram tokens (ngram_range=(1, 2)). Stop words removed (stop_words='english')
+            count_vect = CountVectorizer(ngram_range=(1, 2), stop_words='english')
+            tfidf_transformer = TfidfTransformer()
+            transformers_list.append(('ngram_tf_idf', Pipeline([
+                    ('counts', count_vect),
+                    # ('tf_idf', tfidf_transformer)
+                ]))
+            )
 
         features = FeatureUnion(
-            transformer_list=[
-                ('text_length', textLengthTransformer),
-                ('part_of_speech', posTransformer),
-                ('ngram_tf_idf', Pipeline([
-                  ('counts', count_vect),
-                  #('tf_idf', tfidf_transformer)
-                ]))
-            ],
+            transformer_list=transformers_list,
             # weight components in FeatureUnion
-            transformer_weights={
-                'text_length': 1.0,
-                'part_of_speech': 1.0,
-                'ngram_tf_idf': 1.0,
-            }
+            #transformer_weights={
+            #    'text_length': 1.0,
+            #    'part_of_speech': 1.0
+            #}
         )
 
         ''' =============== Features to add =========================
@@ -84,7 +99,6 @@ class ClassifierFactory:
         - Topics (extracted with LDA)
         - POS ישנן שמתאימים למדיה חברתית
         - Emotions  presence(yes or no)
-        - URLs presence(yes or no)
         - s סימני פיסוק, אותיות גדולות קטנות
         - Username
         - Timestamp(break into 3 groups: morning, noon, evening)
@@ -93,9 +107,15 @@ class ClassifierFactory:
         ################ Test area, check features count and names. ###################
         #try:
         #    checkFeautureTable = features.fit(self.annotated_data.data)
-        #    featuresNames = textLengthTransformer.get_feature_names() + \
-        #                   posTransformer.get_feature_names() + \
-        #                   count_vect.get_feature_names()
+        #    features_names = []
+        #    if self.__enable_text_length_transformer:
+        #        features_names.append(text_length_transformer.get_feature_names())
+        #    if self.__enable_url_transformer:
+        #        features_names.append(has_url_transformer.get_feature_names())
+        #    if self.__enable_pos_transformer:
+        #        features_names.append(pos_transformer.get_feature_names())
+        #    if self.__enable_ngrams_transformer:
+        #        features_names.append(count_vect.get_feature_names())
         #    numpyTable = checkFeautureTable.transform(self.annotated_data.data)
         #except Exception as inst:
         #    print("OS error: {0}".format(inst))
