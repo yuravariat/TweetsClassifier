@@ -12,7 +12,7 @@ from PreProcessor import PreProccessor
 
 from enum import Enum
 
-from Transformers import HasEmoticonsTransformer
+from Transformers.HasEmoticonsTransformer import HasEmoticonsTransformer
 from Transformers.HasUrlTransformer import HasUrlTransformer
 from Transformers.TextLengthTransformer import TextLengthTransformer
 from Transformers.PosTransformer import PosTransformer
@@ -76,7 +76,7 @@ class ClassifierFactory:
             has_url_transformer = HasUrlTransformer()
             transformers_list.append(('has_url', has_url_transformer))
         if self.__enable_emoticons_transformer:
-            emoticons_transformer = HasEmoticonsTransformer
+            emoticons_transformer = HasEmoticonsTransformer()
             transformers_list.append(('has_emoticons', emoticons_transformer))
         if self.__enable_pos_transformer:
             pos_transformer = PosTransformer()
@@ -103,9 +103,9 @@ class ClassifierFactory:
         ''' =============== Features to add =========================
         - Hashtags
         - Topics (extracted with LDA)
-        - POS ישנן שמתאימים למדיה חברתית
+        - POS - We need an appropriate library for Tweeter
         - Emotions  presence(yes or no)
-        - s סימני פיסוק, אותיות גדולות קטנות
+        - Punctuation-marks
         - Username
         - Timestamp(break into 3 groups: morning, noon, evening)
         '''

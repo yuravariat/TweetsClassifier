@@ -2,6 +2,7 @@ from pandas import DataFrame
 from sklearn.base import TransformerMixin
 import re
 
+
 class HasEmoticonsTransformer(TransformerMixin):
 
     def transform(self, X, **transform_params):
