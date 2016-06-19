@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
-import itertools
-from pandas import DataFrame
-from sklearn.base import TransformerMixin
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline, FeatureUnion
 
+from DataProvider import DataLoader
 from PreProcessor import PreProccessor
-
 from enum import Enum
-
 from Transformers.HasEmoticonsTransformer import HasEmoticonsTransformer
 from Transformers.HasUrlTransformer import HasUrlTransformer
 from Transformers.TextLengthTransformer import TextLengthTransformer
@@ -52,8 +48,11 @@ class ClassifierFactory:
         if annotated_data is None:
             # insert some test annotated data
             #categories = ['alt.atheism', 'soc.religion.christian', 'comp.graphics', 'sci.med']
-            categories = ['soc.religion.christian', 'comp.graphics']
-            self.annotated_data = fetch_20newsgroups(subset='train', categories=categories, shuffle=True, random_state=42)
+            #categories = ['soc.religion.christian', 'comp.graphics']
+            #self.annotated_data = fetch_20newsgroups(subset='train', categories=categories, shuffle=True, random_state=42)
+            categories = ['individual', 'organization', 'advertising']
+            self.annotated_data = DataLoader().get_annotated_data(categories=categories)
+
         else:
             self.annotated_data = annotated_data
 

@@ -38,7 +38,8 @@ class PreProccessor:
 
     def Perform(self, listOfStrings):
         for indx, text in enumerate(listOfStrings):
-            if self.urls_replace :
+            print(listOfStrings[indx])
+            if self.urls_replace:
                 listOfStrings[indx] = self.__urls_replace(listOfStrings[indx])
             if self.user_references_replace:
                 listOfStrings[indx] = self.__user_references_replace(listOfStrings[indx])
