@@ -6,6 +6,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline, FeatureUnion
 
 from DataProvider import DataLoader
+from DataProvider import AsthmaTweetsGenerator
 from PreProcessor import PreProccessor
 from enum import Enum
 from Transformers.HasEmoticonsTransformer import HasEmoticonsTransformer
@@ -145,6 +146,9 @@ Classifier container
 class Classifier:
     classifier = None
     labels = None
+
+generator = AsthmaTweetsGenerator()
+generator.generate()
 
 # Build classifier test
 classifierBuilder = ClassifierFactory()

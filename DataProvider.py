@@ -11,6 +11,81 @@ from sklearn.datasets import base
 from sklearn.datasets.base import _pkl_filepath
 
 
+class AsthmaTweetsGenerator:
+
+    def __init__(self):
+        pass
+
+    def generate(self, data_home=None, ):
+        data_home = get_data_home(data_home=data_home)
+        asthma_path = os.path.join(data_home, 'asthma')
+        tweets_path = os.path.join(data_home, 'tweets')
+        if not os.path.exists(tweets_path):
+            return
+        '''
+        *** Manual process:
+        Save annotation files as 'Text (MS-DOS)(*.txt)', e.g. Annotations_Alona.txt (all annotation files should keep the same format)
+
+        *** Automated process:
+        1. Get file names from the C:\Users\[logged in user]\scikit_learn_data\tweets
+        2. For each file read all tweets line by line (only those where the category is not empty)
+        3. For each tweet generate a unique file
+        '''
+        file_paths = []
+        for root, directories, files in os.walk(tweets_path):
+            for filename in files:
+                file_path = os.path.join(root, filename)
+                file_paths.append(file_path)
+        print (file_paths)
+
+        tweets = []
+        for file_path in file_paths:
+            with open(file_path, 'r') as f:
+                for line in f:
+                    tweets.append(line)
+            f.closed
+
+        counter = 0
+        tweets_iterator = iter(tweets)
+        next(tweets_iterator)
+        for tweet in tweets_iterator:
+            segments = str(tweet).split('\t')
+
+            id = segments[0]
+            posted_by = segments[1]
+            talk_about = segments[2]
+            text = segments[3]
+            description = segments[4]
+            time_zone = segments[5]
+            user_id = segments[6]
+            coordinates = segments[7]
+            tweets_per_user = segments[8]
+            created_at = segments[9]
+            screen_name = segments[10]
+
+            if posted_by == '':
+                continue
+
+            train_path = os.path.join(asthma_path, 'train')
+            if not os.path.exists(train_path):
+                os.makedirs(train_path)
+
+            category_path = os.path.join(train_path, posted_by)
+            if not os.path.exists(category_path):
+                os.makedirs(category_path)
+
+            file_path = os.path.join(category_path, id+'.txt')
+            with open(file_path, "w") as text_file:
+                text_file.write(text)
+
+
+
+
+
+
+
+
+
 class DataLoader:
 
     logger = logging.getLogger(__name__)
