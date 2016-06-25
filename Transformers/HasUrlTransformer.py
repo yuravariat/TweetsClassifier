@@ -1,14 +1,14 @@
 from pandas import DataFrame
 from sklearn.base import TransformerMixin
 
-from PreProcessor import CountVectorizerPreproccess
+from PreProcessor import GetTextFromTweet
 
 
 class HasUrlTransformer(TransformerMixin):
     #max_text_length = 0
 
     def transform(self, X, **transform_params):
-        lengths = DataFrame(map(lambda x: "[URL]" in CountVectorizerPreproccess(x), X), columns=['has_url'])
+        lengths = DataFrame(map(lambda x: "[URL]" in GetTextFromTweet(x), X), columns=['has_url'])
         return lengths
 
     def fit(self, X, y=None, **fit_params):

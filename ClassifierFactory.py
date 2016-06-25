@@ -7,7 +7,7 @@ from sklearn.pipeline import Pipeline, FeatureUnion
 
 from DataProvider import DataLoader
 from DataProvider import AsthmaTweetsGenerator
-from PreProcessor import PreProccessor, CountVectorizerPreproccess
+from PreProcessor import PreProccessor, GetTextFromTweet
 from enum import Enum
 from Transformers.HasEmoticonsTransformer import HasEmoticonsTransformer
 from Transformers.HasUrlTransformer import HasUrlTransformer
@@ -85,7 +85,7 @@ class ClassifierFactory:
             transformers_list.append(('part_of_speech', pos_transformer))
         if self.__enable_ngrams_transformer:
             # Tokenizer unigram and bigram tokens (ngram_range=(1, 2)). Stop words removed (stop_words='english')
-            count_vect = CountVectorizer(ngram_range=(1, 2), stop_words='english', preprocessor=CountVectorizerPreproccess)
+            count_vect = CountVectorizer(ngram_range=(1, 2), stop_words='english', preprocessor=GetTextFromTweet)
             #tfidf_transformer = TfidfTransformer()
             transformers_list.append(('ngram_tf_idf', Pipeline([
                     ('counts', count_vect),
