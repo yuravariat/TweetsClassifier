@@ -52,3 +52,8 @@ class PreProccessor:
 #test = PreProccessor()
 #newlist = test.Perform(['kjhkj @yura h5kjh 5323 kj h https://t.co/1KrcmPzBkl jhj h j '])
 #ttt = 1
+
+def CountVectorizerPreproccess(tweet):
+    segments = str(tweet).split('\t')
+    text = segments[3]
+    return text

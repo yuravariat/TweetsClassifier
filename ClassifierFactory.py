@@ -7,7 +7,7 @@ from sklearn.pipeline import Pipeline, FeatureUnion
 
 from DataProvider import DataLoader
 from DataProvider import AsthmaTweetsGenerator
-from PreProcessor import PreProccessor
+from PreProcessor import PreProccessor, CountVectorizerPreproccess
 from enum import Enum
 from Transformers.HasEmoticonsTransformer import HasEmoticonsTransformer
 from Transformers.HasUrlTransformer import HasUrlTransformer
@@ -46,16 +46,18 @@ class ClassifierFactory:
             self.classifier_type = classifier_type
 
         # Annotated data
-        if annotated_data is None:
-            # insert some test annotated data
-            #categories = ['alt.atheism', 'soc.religion.christian', 'comp.graphics', 'sci.med']
-            #categories = ['soc.religion.christian', 'comp.graphics']
-            #self.annotated_data = fetch_20newsgroups(subset='train', categories=categories, shuffle=True, random_state=42)
-            categories = ['individual', 'organization', 'advertising']
-            self.annotated_data = DataLoader().get_annotated_data(categories=categories)
-
-        else:
-            self.annotated_data = annotated_data
+        try:
+            if annotated_data is None:
+                # insert some test annotated data
+                #categories = ['alt.atheism', 'soc.religion.christian', 'comp.graphics', 'sci.med']
+                #categories = ['soc.religion.christian', 'comp.graphics']
+                #self.annotated_data = fetch_20newsgroups(subset='train', categories=categories, shuffle=True, random_state=42)
+                categories = ['individual', 'organization', 'advertising']
+                self.annotated_data = DataLoader().get_annotated_data(categories=categories)
+            else:
+                self.annotated_data = annotated_data
+        except Exception as inst:
+            print("OS error: {0}".format(inst))
 
         # Postprocessing (urls, numbers and user references replacement)
         preproccessor = PreProccessor()
@@ -83,8 +85,8 @@ class ClassifierFactory:
             transformers_list.append(('part_of_speech', pos_transformer))
         if self.__enable_ngrams_transformer:
             # Tokenizer unigram and bigram tokens (ngram_range=(1, 2)). Stop words removed (stop_words='english')
-            count_vect = CountVectorizer(ngram_range=(1, 2), stop_words='english')
-            tfidf_transformer = TfidfTransformer()
+            count_vect = CountVectorizer(ngram_range=(1, 2), stop_words='english', preprocessor=CountVectorizerPreproccess)
+            #tfidf_transformer = TfidfTransformer()
             transformers_list.append(('ngram_tf_idf', Pipeline([
                     ('counts', count_vect),
                     # ('tf_idf', tfidf_transformer)

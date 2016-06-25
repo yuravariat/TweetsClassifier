@@ -76,7 +76,7 @@ class AsthmaTweetsGenerator:
 
             file_path = os.path.join(category_path, id+'.txt')
             with open(file_path, "w") as text_file:
-                text_file.write(text)
+                text_file.write(tweet)
 
 
 
