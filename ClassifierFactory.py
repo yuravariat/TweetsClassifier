@@ -157,10 +157,10 @@ classifierBuilder = ClassifierFactory()
 clf = classifierBuilder.buildClassifier()
 
 # Prediction
-docs_new = ['God is love', 'OpenGL on the GPU is fast']
-predicted = clf.classifier.predict(docs_new)
-
-for doc, category in zip(docs_new, predicted):
-    print('%r => %s' % (doc, clf.labels[category]))
+#docs_new = ['God is love', 'OpenGL on the GPU is fast']
+#predicted = clf.classifier.predict(docs_new)
+#
+#for doc, category in zip(docs_new, predicted):
+#    print('%r => %s' % (doc, clf.labels[category]))
 
 rrr=1
