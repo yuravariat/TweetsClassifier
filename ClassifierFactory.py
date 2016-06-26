@@ -13,6 +13,7 @@ from Transformers.HasEmoticonsTransformer import HasEmoticonsTransformer
 from Transformers.HasUrlTransformer import HasUrlTransformer
 from Transformers.TextLengthTransformer import TextLengthTransformer
 from Transformers.PosTransformer import PosTransformer
+from Transformers.UsernameTransformer import UsernameTransformer
 
 '''
 Enum of Classifier types
@@ -33,6 +34,7 @@ class ClassifierFactory:
     __enable_pos_transformer = False
     __enable_ngrams_transformer = True
     __enable_emoticons_transformer = True
+    __enable_username_transformer = True
 
     '''
     annotated_data: tweets with related category.
@@ -69,6 +71,7 @@ class ClassifierFactory:
         has_url_transformer = None
         pos_transformer = None
         emoticons_transformer = None
+        username_transformer = None
 
         transformers_list = []
         if self.__enable_text_length_transformer:
@@ -92,6 +95,9 @@ class ClassifierFactory:
                     # ('tf_idf', tfidf_transformer)
                 ]))
             )
+        if self.__enable_username_transformer:
+            username_transformer = UsernameTransformer()
+            transformers_list.append(('username', username_transformer))
 
         features = FeatureUnion(
             transformer_list=transformers_list,
@@ -106,7 +112,6 @@ class ClassifierFactory:
         - Hashtags
         - Topics (extracted with LDA)
         - POS - We need an appropriate library for Tweeter
-        - Emotions  presence(yes or no)
         - Punctuation-marks
         - Username
         - Timestamp(break into 3 groups: morning, noon, evening)
