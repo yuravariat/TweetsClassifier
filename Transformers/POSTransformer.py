@@ -2,21 +2,25 @@ from pandas import DataFrame, np
 from sklearn.base import TransformerMixin
 import nltk
 
+from PreProcessor import GetTextFromTweet
+
 
 class PosTransformer(TransformerMixin):
+
     def transform(self, X, **transform_params):
 
         numpy_table = np.zeros((len(X), len(self.allTags)))
 
         for row_num, tweet in enumerate(X):
-            words = nltk.wordpunct_tokenize(tweet)
+            words = nltk.wordpunct_tokenize(tweet.text)
             pos_window = nltk.pos_tag(words)
             tag_fd = nltk.FreqDist(tag for (word, tag) in pos_window)
             for tag in tag_fd:
                 if tag in self.allTags:
                     indexOfTag = self.allTags.index(tag)
                     if indexOfTag > -1:
-                        numpy_table[row_num, indexOfTag] = tag_fd[tag]
+                        # Proportion, how much part of speech appears in the text.
+                        numpy_table[row_num, indexOfTag] = tag_fd[tag]/len(words)
 
         data_table = DataFrame(numpy_table, columns=self.allTags)
 
