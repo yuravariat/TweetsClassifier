@@ -25,4 +25,4 @@ class Tweet:
             self.coordinates = segments[7]
             self.tweets_per_user = segments[8]
             self.created_at = segments[9]
-            self.screen_name = segments[10]
+            self.screen_name = segments[11]

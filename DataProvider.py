@@ -63,7 +63,7 @@ class AsthmaTweetsGenerator:
             coordinates = segments[7]
             tweets_per_user = segments[8]
             created_at = segments[9]
-            screen_name = segments[10]
+            screen_name = segments[11]
 
             if posted_by == '':
                 continue
