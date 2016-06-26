@@ -36,16 +36,16 @@ class PreProccessor:
         t = re.sub(r"([\s][0-9]+[\s])", " [NUM] ", t)
         return t
 
-    def Perform(self, listOfStrings):
-        for indx, text in enumerate(listOfStrings):
-            print(listOfStrings[indx])
+    def Perform(self, tweets):
+        for indx, text in enumerate(tweets):
+            print(tweets[indx].text)
             if self.urls_replace:
-                listOfStrings[indx] = self.__urls_replace(listOfStrings[indx])
+                tweets[indx].text = self.__urls_replace(tweets[indx].text)
             if self.user_references_replace:
-                listOfStrings[indx] = self.__user_references_replace(listOfStrings[indx])
+                tweets[indx].text = self.__user_references_replace(tweets[indx].text)
             if self.numbers_replace:
-                listOfStrings[indx] = self.__numbers_replace(listOfStrings[indx])
-        return listOfStrings
+                tweets[indx].text = self.__numbers_replace(tweets[indx].text)
+        return tweets
 
 #opt = {}
 #opt["remove_stop_words"] = False
@@ -54,6 +54,4 @@ class PreProccessor:
 #ttt = 1
 
 def GetTextFromTweet(tweet):
-    segments = str(tweet).split('\t')
-    text = segments[3]
-    return text
+    return tweet.text

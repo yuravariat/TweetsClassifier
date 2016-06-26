@@ -6,7 +6,7 @@ class TextLengthTransformer(TransformerMixin):
     #max_text_length = 0
 
     def transform(self, X, **transform_params):
-        lengths = DataFrame(map(lambda x: len(x),X),columns=['text_length'])
+        lengths = DataFrame(map(lambda x: len(x.text),X),columns=['text_length'])
         return lengths
 
     def fit(self, X, y=None, **fit_params):

@@ -10,6 +10,8 @@ from sklearn.datasets import get_data_home
 from sklearn.datasets import base
 from sklearn.datasets.base import _pkl_filepath
 
+from Tweet import Tweet
+
 
 class AsthmaTweetsGenerator:
 
@@ -186,11 +188,11 @@ class DataLoader:
         data.description = 'The HIV dataset'
 
         if 'headers' in remove:
-            data.data = [self.parse1(text) for text in data.data]
+            data.data = [self.parse1(tweet.text) for tweet in data.data]
         if 'footers' in remove:
-            data.data = [self.parse2(text) for text in data.data]
+            data.data = [self.parse2(tweet.text) for tweet in data.data]
         if 'quotes' in remove:
-            data.data = [self.parse3(text) for text in data.data]
+            data.data = [self.parse3(tweet.text) for tweet in data.data]
 
         if categories is not None:
             labels = [(data.target_names.index(cat), cat) for cat in categories]
@@ -236,6 +238,16 @@ class DataLoader:
 
         cache = dict(train=base.load_files(train_path, encoding='utf-8'),
                      test=base.load_files(test_path, encoding='utf-8'))
+
+        # turn tweet text to Tweet objects.
+        tweetsList = list()
+        for tweet in cache['train'].data:
+            tweetsList.append(Tweet(tweet))
+        cache['train'].data = tweetsList
+        tweetsList = list()
+        for tweet in cache['test'].data:
+            tweetsList.append(Tweet(tweet))
+        cache['test'].data = tweetsList
 
         compressed_content = codecs.encode(pickle.dumps(cache), 'zlib_codec')
 

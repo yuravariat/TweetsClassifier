@@ -24,7 +24,7 @@ class HasEmoticonsTransformer(TransformerMixin):
             )"""
         emoticon_re = re.compile(emoji_pattern + "|" + emoticon_string, re.VERBOSE | re.I | re.UNICODE)
 
-        has_emoticons = DataFrame(map(lambda x: emoticon_re.search(GetTextFromTweet(x)) is not None, X), columns=['has_url'])
+        has_emoticons = DataFrame(map(lambda x: emoticon_re.search(x.text) is not None, X), columns=['has_url'])
         return has_emoticons
 
     def fit(self, X, y=None, **fit_params):
