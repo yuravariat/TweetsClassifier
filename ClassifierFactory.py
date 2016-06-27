@@ -11,6 +11,7 @@ from PreProcessor import PreProccessor, GetTextFromTweet
 from enum import Enum
 from Transformers.HasEmoticonsTransformer import HasEmoticonsTransformer
 from Transformers.HasUrlTransformer import HasUrlTransformer
+from Transformers.PartOfDayTransformer import PartOfDayTransformer
 from Transformers.TextLengthTransformer import TextLengthTransformer
 from Transformers.PosTransformer import PosTransformer
 from Transformers.UsernameTransformer import UsernameTransformer
@@ -35,6 +36,7 @@ class ClassifierFactory:
     __enable_ngrams_transformer = True
     __enable_emoticons_transformer = True
     __enable_username_transformer = True
+    __enable_part_of_day_transformer = True
 
     '''
     annotated_data: tweets with related category.
@@ -72,6 +74,7 @@ class ClassifierFactory:
         pos_transformer = None
         emoticons_transformer = None
         username_transformer = None
+        part_of_day_transformer = None
 
         transformers_list = []
         if self.__enable_text_length_transformer:
@@ -83,6 +86,12 @@ class ClassifierFactory:
         if self.__enable_emoticons_transformer:
             emoticons_transformer = HasEmoticonsTransformer()
             transformers_list.append(('has_emoticons', emoticons_transformer))
+        if self.__enable_username_transformer:
+            username_transformer = UsernameTransformer()
+            transformers_list.append(('username', username_transformer))
+        if self.__enable_part_of_day_transformer:
+            part_of_day_transformer = PartOfDayTransformer()
+            transformers_list.append(('part_of_day', part_of_day_transformer))
         if self.__enable_pos_transformer:
             pos_transformer = PosTransformer()
             transformers_list.append(('part_of_speech', pos_transformer))
@@ -95,9 +104,6 @@ class ClassifierFactory:
                     # ('tf_idf', tfidf_transformer)
                 ]))
             )
-        if self.__enable_username_transformer:
-            username_transformer = UsernameTransformer()
-            transformers_list.append(('username', username_transformer))
 
         features = FeatureUnion(
             transformer_list=transformers_list,
@@ -113,8 +119,6 @@ class ClassifierFactory:
         - Topics (extracted with LDA)
         - POS - We need an appropriate library for Tweeter
         - Punctuation-marks
-        - Username
-        - Timestamp(break into 3 groups: morning, noon, evening)
         '''
 
         ################ Test area, check features count and names. ###################
@@ -143,10 +147,10 @@ class ClassifierFactory:
 
         # Actually builds the classifier
         classifier = pipeline.fit(self.annotated_data.data, self.annotated_data.target)
-        classifier_cont = Classifier()
-        classifier_cont.classifier = classifier
-        classifier_cont.labels = self.annotated_data.target_names
-        return classifier_cont
+        classifier_obj = Classifier()
+        classifier_obj.classifier = classifier
+        classifier_obj.labels = self.annotated_data.target_names
+        return classifier_obj
 '''
 Classifier container
 '''
