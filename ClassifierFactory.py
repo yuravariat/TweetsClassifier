@@ -2,6 +2,8 @@
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline, FeatureUnion
 
@@ -88,7 +90,7 @@ class ClassifierFactory:
             transformers_list.append(('has_emoticons', emoticons_transformer))
         if self.__enable_username_transformer:
             username_transformer = UsernameTransformer()
-            transformers_list.append(('username', username_transformer))
+            transformers_list.append(('user_name', username_transformer))
         if self.__enable_part_of_day_transformer:
             part_of_day_transformer = PartOfDayTransformer()
             transformers_list.append(('part_of_day', part_of_day_transformer))
@@ -101,7 +103,7 @@ class ClassifierFactory:
             #tfidf_transformer = TfidfTransformer()
             transformers_list.append(('ngram_tf_idf', Pipeline([
                     ('counts', count_vect),
-                    # ('tf_idf', tfidf_transformer)
+                    #('tf_idf', tfidf_transformer)
                 ]))
             )
 
@@ -161,13 +163,18 @@ class Classifier:
 generator = AsthmaTweetsGenerator()
 generator.generate()
 
-# Build classifier test
+# Build classifier
 classifierBuilder = ClassifierFactory()
 clf = classifierBuilder.buildClassifier()
 
 # Prediction
-#docs_new = ['God is love', 'OpenGL on the GPU is fast']
-#predicted = clf.classifier.predict(docs_new)
+categories = ['individual', 'organization', 'advertising']
+testData = DataLoader().get_annotated_data(categories=categories, subset='train')
+
+predicted = clf.classifier.predict(testData.data)
+precision = precision_score(testData.target,predicted)
+recall = recall_score(testData.target,predicted)
+
 #
 #for doc, category in zip(docs_new, predicted):
 #    print('%r => %s' % (doc, clf.labels[category]))

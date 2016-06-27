@@ -3,16 +3,16 @@ from sklearn.base import TransformerMixin
 
 
 class TextLengthTransformer(TransformerMixin):
-    #max_text_length = 0
+    max_text_length = 0
 
     def transform(self, X, **transform_params):
-        lengths = DataFrame(map(lambda x: len(x.text),X),columns=['text_length'])
-        return lengths
+        table = DataFrame(map(lambda x: len(x.text)/self.max_text_length,X),columns=['text_length'])
+        return table
 
     def fit(self, X, y=None, **fit_params):
-        #for text in X:
-        #    if len(text)>self.max_text_length:
-        #        self.max_text_length = len(text)
+        for x in X:
+            if len(x.text)>self.max_text_length:
+                self.max_text_length = len(x.text)
         return self
 
     def get_feature_names(self):

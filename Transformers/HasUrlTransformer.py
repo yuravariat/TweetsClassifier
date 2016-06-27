@@ -8,8 +8,8 @@ class HasUrlTransformer(TransformerMixin):
     #max_text_length = 0
 
     def transform(self, X, **transform_params):
-        lengths = DataFrame(map(lambda x: "[URL]" in x.text, X), columns=['has_url'])
-        return lengths
+        table = DataFrame(map(lambda x: "[URL]" in x.text, X), columns=['has_url'])
+        return table
 
     def fit(self, X, y=None, **fit_params):
         #for text in X:

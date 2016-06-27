@@ -5,8 +5,8 @@ from dateutil import parser
 class PartOfDayTransformer(TransformerMixin):
 
     def transform(self, X, **transform_params):
-        lengths = DataFrame(map(lambda x: PartOfDayTransformer.get_part_of_day(x.created_at),X),columns=['part_of_day'])
-        return lengths
+        table = DataFrame(map(lambda x: PartOfDayTransformer.get_part_of_day(x.created_at),X),columns=['part_of_day'])
+        return table
 
     def fit(self, X, y=None, **fit_params):
         return self
