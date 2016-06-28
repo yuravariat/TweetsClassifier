@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 from sklearn.datasets import fetch_20newsgroups
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.svm import SVC
 
 from DataProvider import DataLoader
 from DataProvider import AsthmaTweetsGenerator
@@ -17,6 +20,8 @@ from Transformers.PartOfDayTransformer import PartOfDayTransformer
 from Transformers.TextLengthTransformer import TextLengthTransformer
 from Transformers.PosTransformer import PosTransformer
 from Transformers.UsernameTransformer import UsernameTransformer
+from sklearn import tree
+from sklearn.ensemble import AdaBoostClassifier
 
 '''
 Enum of Classifier types
@@ -24,7 +29,10 @@ Enum of Classifier types
 class ClassifierType(Enum):
     MultinomialNB = 1
     SVM = 2
-
+    DecisionTree = 3
+    RandomForest = 4
+    LogisticRegression = 5
+    AdaBoost = 6
 '''
 ClassifierFactory.
 '''
@@ -46,9 +54,10 @@ class ClassifierFactory:
     '''
     def buildClassifier(self, annotated_data=None, classifier_type=None):
 
-        if classifier_type is None:
+        if classifier_type is None and self.classifier_type is None:
             self.classifier_type = ClassifierType.MultinomialNB
-        else:
+
+        if classifier_type is not None and self.classifier_type is None:
             self.classifier_type = classifier_type
 
         # Annotated data
@@ -142,9 +151,23 @@ class ClassifierFactory:
         #    print("OS error: {0}".format(inst))
         #################################################################################
 
+        __classifier = None
+        if self.classifier_type is ClassifierType.MultinomialNB:
+            __classifier = MultinomialNB()
+        if self.classifier_type is ClassifierType.SVM:
+            __classifier = SVC()
+        if self.classifier_type is ClassifierType.DecisionTree:
+            __classifier = tree.DecisionTreeClassifier()
+        if self.classifier_type is ClassifierType.RandomForest:
+            __classifier = RandomForestClassifier()
+        if self.classifier_type is ClassifierType.LogisticRegression:
+            __classifier = LogisticRegression()
+        if self.classifier_type is ClassifierType.AdaBoost:
+            __classifier = AdaBoostClassifier()
+
         pipeline = Pipeline([
           ('features', features),
-          ('classifier', MultinomialNB())
+          ('classifier', __classifier)
         ])
 
         # Actually builds the classifier
