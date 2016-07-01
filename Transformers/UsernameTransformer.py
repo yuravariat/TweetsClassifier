@@ -2,6 +2,7 @@ from pandas import DataFrame
 from sklearn.base import TransformerMixin
 from sklearn.feature_extraction import DictVectorizer
 
+
 class UsernameTransformer(TransformerMixin):
 
     vec=None

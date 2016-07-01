@@ -1,8 +1,6 @@
 from pandas import DataFrame
 from sklearn.base import TransformerMixin
 
-from PreProcessor import GetTextFromTweet
-
 
 class HasUrlTransformer(TransformerMixin):
     #max_text_length = 0

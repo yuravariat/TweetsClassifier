@@ -2,8 +2,6 @@ from pandas import DataFrame
 from sklearn.base import TransformerMixin
 import re
 
-from PreProcessor import GetTextFromTweet
-
 
 class HasEmoticonsTransformer(TransformerMixin):
 

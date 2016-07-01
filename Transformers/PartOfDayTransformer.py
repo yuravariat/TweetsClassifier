@@ -2,10 +2,11 @@ from pandas import DataFrame
 from sklearn.base import TransformerMixin
 from dateutil import parser
 
+
 class PartOfDayTransformer(TransformerMixin):
 
     def transform(self, X, **transform_params):
-        table = DataFrame(map(lambda x: PartOfDayTransformer.get_part_of_day(x.created_at),X),columns=['part_of_day'])
+        table = DataFrame(map(lambda x: PartOfDayTransformer.get_part_of_day(x.created_at), X), columns=['part_of_day'])
         return table
 
     def fit(self, X, y=None, **fit_params):

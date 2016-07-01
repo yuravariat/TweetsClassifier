@@ -8,28 +8,72 @@ import numpy as np
 from sklearn.utils import validation
 from sklearn.datasets import get_data_home
 from sklearn.datasets import base
-from sklearn.datasets.base import _pkl_filepath
-
-from Tweet import Tweet
 
 
-class AsthmaTweetsGenerator:
+class Tweet:
+    tweet_id = ''
+    query = ''
+    disease = ''
+    created_at = ''
+    screen_name = ''
+    text = ''
+    description = ''
+    location = ''
+    timezone = ''
+    user_id = ''
+    coordinate = ''
+    tweets_per_user = ''
+    posted_by = ''
+    talk_about = ''
+    sarcasm = ''
 
-    def __init__(self):
-        pass
+    def __init__(self, tweet_text=None):
+        if tweet_text is not None:
+            segments = str(tweet_text).split('\t')
 
-    def generate(self, data_home=None, ):
-        data_home = get_data_home(data_home=data_home)
-        asthma_path = os.path.join(data_home, 'asthma')
-        tweets_path = os.path.join(data_home, 'tweets')
+            self.tweet_id = segments[0]
+            self.query = segments[1]
+            self.disease = segments[2]
+            self.created_at = segments[3]
+            self.screen_name = segments[4]
+            self.text = segments[5]
+            self.description = segments[6]
+            self.location = segments[7]
+            self.timezone = segments[8]
+            self.user_id = segments[9]
+            self.coordinate = segments[10]
+            self.tweets_per_user = segments[11]
+            self.posted_by = segments[12]
+            self.talk_about = segments[13]
+            self.sarcasm = segments[14]
+
+
+
+class DataAdapter:
+
+    logger = logging.getLogger(__name__)
+    cache_name = "cache.pkz"
+    train_folder = "train"
+    test_folder = 'test'
+    disease = None
+
+    def __init__(self, disease):
+        self.disease = disease
+
+    def create_data(self, disease):
+        data_home = get_data_home()
+        # e.g. C:\Users\[user]\scikit_learn_data\hiv
+        disease_path = os.path.join(data_home, disease)
+        # e.g. C:\Users\[user]\scikit_learn_data\tweets\hiv
+        tweets_path = os.path.join(data_home, 'tweets', disease)
         if not os.path.exists(tweets_path):
             return
         '''
         *** Manual process:
-        Save annotation files as 'Text (MS-DOS)(*.txt)', e.g. Annotations_Alona.txt (all annotation files should keep the same format)
+        Save annotation files as 'Text (MS-DOS)(*.txt)', e.g. tweets1.txt (all annotation files should keep the same format)
 
         *** Automated process:
-        1. Get file names from the C:\Users\[logged in user]\scikit_learn_data\tweets
+        1. Get file names from the C:\Users\[user]\scikit_learn_data\tweets\hiv
         2. For each file read all tweets line by line (only those where the category is not empty)
         3. For each tweet generate a unique file
         '''
@@ -49,62 +93,45 @@ class AsthmaTweetsGenerator:
 
         counter = 0
         tweets_iterator = iter(tweets)
+        # skip the first line - column names
         next(tweets_iterator)
         for tweet in tweets_iterator:
             segments = str(tweet).split('\t')
 
-            id = segments[0]
-            posted_by = segments[1]
-            talk_about = segments[2]
-            text = segments[3]
-            description = segments[4]
-            time_zone = segments[5]
-            user_id = segments[6]
-            coordinates = segments[7]
-            tweets_per_user = segments[8]
-            created_at = segments[9]
-            screen_name = segments[11]
+            tweet_id = segments[0]
+            query = segments[1]
+            disease = segments[2]
+            created_at = segments[3]
+            screen_name = segments[4]
+            text = segments[5]
+            description = segments[6]
+            location = segments[7]
+            timezone = segments[8]
+            user_id = segments[9]
+            coordinate = segments[10]
+            tweets_per_user = segments[11]
+            posted_by = segments[12]
+            talk_about = segments[13]
+            sarcasm = segments[14]
 
-            if posted_by == '':
+            # classification category
+            if talk_about == '':
                 continue
 
-            train_path = os.path.join(asthma_path, 'train')
+            train_path = os.path.join(disease_path, self.train_folder)
             if not os.path.exists(train_path):
                 os.makedirs(train_path)
 
-            category_path = os.path.join(train_path, posted_by)
+            category_path = os.path.join(train_path, talk_about)
             if not os.path.exists(category_path):
                 os.makedirs(category_path)
 
-            file_path = os.path.join(category_path, id+'.txt')
+            file_path = os.path.join(category_path, str(counter) + '.txt')
             with open(file_path, "w") as text_file:
                 text_file.write(tweet)
+            counter += 1
 
-
-
-
-
-
-
-
-
-class DataLoader:
-
-    logger = logging.getLogger(__name__)
-    cache_name = "cache.pkz"
-    train_folder = "train"
-    test_folder = 'test'
-
-    def __init__(self):
-        pass
-
-    def get_annotated_data(self,
-                           data_home=None,
-                           subset='train',
-                           categories=None,
-                           shuffle=True,
-                           random_state=42,
-                           remove=()):
+    def get_data(self, subset='train', categories=None, shuffle=True, random_state=42):
         """Load the filenames and data from the 20 newsgroups dataset.
 
         Read more in the :ref:`User Guide <20newsgroups>`.
@@ -146,9 +173,9 @@ class DataLoader:
             correct.
         """
 
-        data_home = get_data_home(data_home=data_home)
-        cache_path = _pkl_filepath(data_home, self.cache_name)
-        target_path = os.path.join(data_home, 'asthma')
+        data_home = get_data_home()
+        cache_path = os.path.join(data_home, self.cache_name)
+        target_path = os.path.join(data_home, self.disease)
         cache = None
         if os.path.exists(cache_path):
             try:
@@ -186,13 +213,6 @@ class DataLoader:
                 "subset can only be 'train', 'test' or 'all', got '%s'" % subset)
 
         data.description = 'The HIV dataset'
-
-        if 'headers' in remove:
-            data.data = [self.parse1(tweet.text) for tweet in data.data]
-        if 'footers' in remove:
-            data.data = [self.parse2(tweet.text) for tweet in data.data]
-        if 'quotes' in remove:
-            data.data = [self.parse3(tweet.text) for tweet in data.data]
 
         if categories is not None:
             labels = [(data.target_names.index(cat), cat) for cat in categories]
@@ -257,15 +277,3 @@ class DataLoader:
         shutil.rmtree(target_path)
 
         return cache
-
-    def parse1(self, text):
-        pass
-
-    def parse2(self, text):
-        pass
-
-    def parse3(self, text):
-        pass
-
-
-

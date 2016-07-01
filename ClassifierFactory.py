@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from sklearn.datasets import fetch_20newsgroups
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -9,23 +8,22 @@ from sklearn.metrics import recall_score
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
-
-from DataProvider import DataLoader
-from DataProvider import AsthmaTweetsGenerator
-from PreProcessor import PreProccessor, GetTextFromTweet
 from enum import Enum
+from sklearn import tree
+from sklearn.ensemble import AdaBoostClassifier
+
+# our project packages
+from classifier.data import DataAdapter
+from classifier.pre_processor import PreProccessor
+from classifier.pre_processor import GetTextFromTweet
 from Transformers.HasEmoticonsTransformer import HasEmoticonsTransformer
 from Transformers.HasUrlTransformer import HasUrlTransformer
 from Transformers.PartOfDayTransformer import PartOfDayTransformer
 from Transformers.TextLengthTransformer import TextLengthTransformer
 from Transformers.PosTransformer import PosTransformer
 from Transformers.UsernameTransformer import UsernameTransformer
-from sklearn import tree
-from sklearn.ensemble import AdaBoostClassifier
 
-'''
-Enum of Classifier types
-'''
+
 class ClassifierType(Enum):
     MultinomialNB = 1
     SVM = 2
@@ -33,10 +31,22 @@ class ClassifierType(Enum):
     RandomForest = 4
     LogisticRegression = 5
     AdaBoost = 6
-'''
-ClassifierFactory.
-'''
+
+
+class Classifier:
+
+    def __init__(self):
+        pass
+
+    classifier = None
+    labels = None
+
+
 class ClassifierFactory:
+
+    def __init__(self):
+        pass
+
     annotated_data = None
     classifier_type = None
 
@@ -48,11 +58,7 @@ class ClassifierFactory:
     __enable_username_transformer = True
     __enable_part_of_day_transformer = True
 
-    '''
-    annotated_data: tweets with related category.
-    classifier_type: which classifier to use.
-    '''
-    def buildClassifier(self, annotated_data=None, classifier_type=None):
+    def buildClassifier(self, annotated_data=None, classifier_type=None, categories=None, disease=None):
 
         if classifier_type is None and self.classifier_type is None:
             self.classifier_type = ClassifierType.MultinomialNB
@@ -63,12 +69,7 @@ class ClassifierFactory:
         # Annotated data
         try:
             if annotated_data is None:
-                # insert some test annotated data
-                #categories = ['alt.atheism', 'soc.religion.christian', 'comp.graphics', 'sci.med']
-                #categories = ['soc.religion.christian', 'comp.graphics']
-                #self.annotated_data = fetch_20newsgroups(subset='train', categories=categories, shuffle=True, random_state=42)
-                categories = ['individual', 'organization', 'advertising']
-                self.annotated_data = DataLoader().get_annotated_data(categories=categories)
+                self.annotated_data = DataAdapter(disease).get_data(categories=categories, subset='train')
             else:
                 self.annotated_data = annotated_data
         except Exception as inst:
@@ -76,7 +77,7 @@ class ClassifierFactory:
 
         # Postprocessing (urls, numbers and user references replacement)
         preproccessor = PreProccessor()
-        preproccessor.Perform(self.annotated_data.data)
+        preproccessor.perform(self.annotated_data.data)
 
         count_vect = None
         tfidf_transformer = None
@@ -176,30 +177,28 @@ class ClassifierFactory:
         classifier_obj.classifier = classifier
         classifier_obj.labels = self.annotated_data.target_names
         return classifier_obj
-'''
-Classifier container
-'''
-class Classifier:
-    classifier = None
-    labels = None
 
-generator = AsthmaTweetsGenerator()
-generator.generate()
+# ------------------------------------- classification area ---------------------------------
 
-# Build classifier
+disease = 'hiv'
+categories = ['celeb', 'dont_know', 'family', 'himself', 'knows', 'none', 'subject']
+dataAdapter = DataAdapter(disease)
+
+# 1. Generate training set by splitting the input files multiple files (file per tweet)
+dataAdapter.create_data(disease)
+
+# 2. Load data from files or cache
+testData = dataAdapter.get_data(categories=categories, subset='train')
+
+# 3. Train classifier
 classifierBuilder = ClassifierFactory()
-clf = classifierBuilder.buildClassifier()
+clf = classifierBuilder.buildClassifier(disease=disease)
 
-# Prediction
-categories = ['individual', 'organization', 'advertising']
-testData = DataLoader().get_annotated_data(categories=categories, subset='train')
-
+# 4. Test classifier
 predicted = clf.classifier.predict(testData.data)
-precision = precision_score(testData.target,predicted)
-recall = recall_score(testData.target,predicted)
 
-#
-#for doc, category in zip(docs_new, predicted):
-#    print('%r => %s' % (doc, clf.labels[category]))
+# 5. Analyze
+precision = precision_score(testData.target, predicted, average='weighted')
+recall = recall_score(testData.target, predicted, average='weighted')
 
-rrr=1
+print('done!')

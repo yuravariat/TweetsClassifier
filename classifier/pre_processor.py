@@ -1,6 +1,7 @@
 #from stop_words import get_stop_words
 import re
 
+
 class PreProccessor:
     remove_stop_words = True
     urls_replace = True
@@ -36,7 +37,7 @@ class PreProccessor:
         t = re.sub(r"([\s][0-9]+[\s])", " [NUM] ", t)
         return t
 
-    def Perform(self, tweets):
+    def perform(self, tweets):
         for indx, text in enumerate(tweets):
             print(tweets[indx].text)
             if self.urls_replace:

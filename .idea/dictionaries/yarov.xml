@@ -2,7 +2,11 @@
   <dictionary name="yarov">
     <words>
       <w>dataset</w>
+      <w>dont</w>
       <w>filenames</w>
+      <w>multinomial</w>
+      <w>ngrams</w>
+      <w>scikit</w>
       <w>zlib</w>
     </words>
   </dictionary>
