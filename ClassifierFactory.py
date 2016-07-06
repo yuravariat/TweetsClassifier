@@ -58,7 +58,7 @@ class ClassifierFactory:
     __enable_username_transformer = True
     __enable_part_of_day_transformer = True
 
-    def buildClassifier(self, annotated_data=None, classifier_type=None, categories=None, disease=None):
+    def buildClassifier(self, train_data, classifier_type=None, categories=None, disease=None):
 
         if classifier_type is None and self.classifier_type is None:
             self.classifier_type = ClassifierType.MultinomialNB
@@ -67,13 +67,7 @@ class ClassifierFactory:
             self.classifier_type = classifier_type
 
         # Annotated data
-        try:
-            if annotated_data is None:
-                self.annotated_data = DataAdapter(disease).get_data(categories=categories, subset='train')
-            else:
-                self.annotated_data = annotated_data
-        except Exception as inst:
-            print("OS error: {0}".format(inst))
+        self.annotated_data = train_data
 
         # Postprocessing (urls, numbers and user references replacement)
         preproccessor = PreProccessor()
@@ -187,17 +181,20 @@ dataAdapter = DataAdapter(disease)
 # 1. Generate training set by splitting the input files multiple files (file per tweet)
 dataAdapter.create_data(disease)
 
-# 2. Load data from files or cache
-testData = dataAdapter.get_data(categories=categories, subset='train')
+# 2. Load train data from files or cache
+trainData = dataAdapter.get_data(categories=categories, subset='train')
 
 # 3. Train classifier
 classifierBuilder = ClassifierFactory()
-clf = classifierBuilder.buildClassifier(disease=disease)
+clf = classifierBuilder.buildClassifier(disease=disease,train_data=trainData)
 
-# 4. Test classifier
+# 4. Load test data from files or cache
+testData = dataAdapter.get_data(categories=categories, subset='train')
+
+# 5. Test classifier
 predicted = clf.classifier.predict(testData.data)
 
-# 5. Analyze
+# 6. Analyze
 precision = precision_score(testData.target, predicted, average='weighted')
 recall = recall_score(testData.target, predicted, average='weighted')
 
