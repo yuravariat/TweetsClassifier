@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from sklearn.cross_validation import cross_val_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -9,10 +10,12 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
 from enum import Enum
-from sklearn import tree
+from sklearn import tree, cross_validation
 from sklearn.ensemble import AdaBoostClassifier
 
 # our project packages
+from sympy.physics.quantum.circuitplot import np
+
 from classifier.data import DataAdapter
 from classifier.pre_processor import PreProccessor
 from classifier.pre_processor import GetTextFromTweet
@@ -167,9 +170,18 @@ class ClassifierFactory:
 
         # Actually builds the classifier
         classifier = pipeline.fit(self.annotated_data.data, self.annotated_data.target)
+
+        # cross validation test
+        sparse_array_data = features.fit_transform(self.annotated_data.data);
+        nd_array_data = sparse_array_data.toarray()
+        scores = cross_validation.cross_val_score(__classifier, nd_array_data, self.annotated_data.target,
+                                                  cv=5,scoring='precision')
+        scores_mean = scores.mean()
+
         classifier_obj = Classifier()
         classifier_obj.classifier = classifier
         classifier_obj.labels = self.annotated_data.target_names
+
         return classifier_obj
 
 # ------------------------------------- classification area ---------------------------------

@@ -2,9 +2,6 @@ from pandas import DataFrame, np
 from sklearn.base import TransformerMixin
 import nltk
 
-from PreProcessor import GetTextFromTweet
-
-
 class PosTransformer(TransformerMixin):
 
     def transform(self, X, **transform_params):
