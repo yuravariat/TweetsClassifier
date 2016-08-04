@@ -82,7 +82,7 @@ class DataAdapter:
             for filename in files:
                 file_path = os.path.join(root, filename)
                 file_paths.append(file_path)
-        print (file_paths)
+        print 'data loaded from ' + str(file_paths)
 
         tweets = []
         for file_path in file_paths:

@@ -25,7 +25,6 @@ from Transformers.PartOfDayTransformer import PartOfDayTransformer
 from Transformers.TextLengthTransformer import TextLengthTransformer
 from Transformers.PosTransformer import PosTransformer
 from Transformers.UsernameTransformer import UsernameTransformer
-from Transformers.PunctuationTransformer import PunctuationTransformer
 
 
 class ClassifierType(Enum):
@@ -55,17 +54,14 @@ class ClassifierFactory:
     classifier_type = None
 
     __enable_text_length_transformer = True
-    __enable_url_transformer = True
-    __enable_pos_transformer = True
+    __enable_url_transformer = False
+    __enable_pos_transformer = False
     __enable_ngrams_transformer = True
-    __enable_emoticons_transformer = True
-    __enable_username_transformer = True
-    __enable_part_of_day_transformer = True
-    __enable_punctuation_transformer = True
+    __enable_emoticons_transformer = False
+    __enable_username_transformer = False
+    __enable_part_of_day_transformer = False
 
     def buildClassifier(self, train_data, classifier_type=None, categories=None, disease=None):
-
-        print('start training classifier')
 
         if classifier_type is None and self.classifier_type is None:
             self.classifier_type = ClassifierType.MultinomialNB
@@ -75,14 +71,10 @@ class ClassifierFactory:
 
         # Annotated data
         self.annotated_data = train_data
-        print('train contains ' + str(len(train_data.data)) + ' tweets and ' + str(len(train_data.target_names)) +
-              ' categories: ' + str(train_data.target_names) )
 
         # Postprocessing (urls, numbers and user references replacement)
         preproccessor = PreProccessor()
         preproccessor.perform(self.annotated_data.data)
-
-        print('pre-proccess done')
 
         count_vect = None
         tfidf_transformer = None
@@ -92,9 +84,6 @@ class ClassifierFactory:
         emoticons_transformer = None
         username_transformer = None
         part_of_day_transformer = None
-        punctuation_transformer = None
-
-        print('classifier algorithm: ' + str(self.classifier_type) )
 
         transformers_list = []
         if self.__enable_text_length_transformer:
@@ -115,9 +104,6 @@ class ClassifierFactory:
         if self.__enable_pos_transformer:
             pos_transformer = PosTransformer()
             transformers_list.append(('part_of_speech', pos_transformer))
-        if self.__enable_punctuation_transformer:
-            punctuation_transformer = PunctuationTransformer()
-            transformers_list.append(('punctuations', punctuation_transformer))
         if self.__enable_ngrams_transformer:
             # Tokenizer unigram and bigram tokens (ngram_range=(1, 2)). Stop words removed (stop_words='english')
             count_vect = CountVectorizer(ngram_range=(1, 2), stop_words='english', preprocessor=GetTextFromTweet)
@@ -127,7 +113,6 @@ class ClassifierFactory:
                     #('tf_idf', tfidf_transformer)
                 ]))
             )
-        print 'feature: ' + str([x[0] for x in transformers_list])
 
         features = FeatureUnion(
             transformer_list=transformers_list,
@@ -142,6 +127,7 @@ class ClassifierFactory:
         - Hashtags
         - Topics (extracted with LDA)
         - POS - We need an appropriate library for Tweeter
+        - Punctuation-marks
         '''
 
         ################ Test area, check features count and names. ###################
@@ -182,9 +168,36 @@ class ClassifierFactory:
           ('classifier', __classifier)
         ])
 
+        pipelineTest = Pipeline([
+            ('features', features)
+        ])
+
         # Actually builds the classifier
         classifier = pipeline.fit(self.annotated_data.data, self.annotated_data.target)
-        print 'classifier ready to use'
+
+        # cross validation test
+        #sparse_array_data = features.fit_transform(self.annotated_data.data);
+        #nd_array_data = sparse_array_data.toarray()
+        #scores = cross_validation.cross_val_score(__classifier, nd_array_data, self.annotated_data.target,
+        #                                          cv=5,scoring='precision')
+        #scores_mean = scores.mean()
+
+        vectorizer = CountVectorizer()
+
+        trainData = dataAdapter.get_data(categories=categories, subset='train')
+        trainData.data = trainData.data[0:552]
+        trainData.target = trainData.target[0:552]
+        X_train = pipelineTest.fit_transform(trainData.data)
+        clf = MultinomialNB()
+        clf.fit(X_train,trainData.target)
+
+        testData = dataAdapter.get_data(categories=categories, subset='train')
+        testData.data = testData.data[553:613]
+        testData.target = testData.target[553:613]
+        X_test = pipelineTest.transform(testData.data)
+        predicted = clf.predict(X_test)
+        precision = precision_score(testData.target, predicted, average='weighted')
+        recall = recall_score(testData.target, predicted, average='weighted')
 
         classifier_obj = Classifier()
         classifier_obj.classifier = classifier
@@ -208,20 +221,14 @@ trainData = dataAdapter.get_data(categories=categories, subset='train')
 classifierBuilder = ClassifierFactory()
 clf = classifierBuilder.buildClassifier(disease=disease,train_data=trainData)
 
+# 4. Load test data from files or cache
+testData = dataAdapter.get_data(categories=categories, subset='train')
 
-# Evaluation with cross validation test
-print 'performing cross validation c=5 on train data'
-scores = cross_validation.cross_val_score(clf.classifier, trainData.data, trainData.target,
-                                          cv=5,scoring='precision_weighted')
-scores_mean = scores.mean()
-print 'cross validation done'
-print 'scores: ' + str(scores)
-print 'scores_mean: ' + str(scores_mean)
+# 5. Test classifier
+predicted = clf.classifier.predict(testData)
 
-# Evaluation with splited data
-#testData = dataAdapter.get_data(categories=categories, subset='train')
-#predicted = clf.classifier.predict(testData)
-#precision = precision_score(testData.target, predicted, average='weighted')
-#recall = recall_score(testData.target, predicted, average='weighted')
+# 6. Analyze
+precision = precision_score(testData.target, predicted, average='weighted')
+recall = recall_score(testData.target, predicted, average='weighted')
 
 print('done!')

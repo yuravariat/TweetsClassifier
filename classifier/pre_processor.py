@@ -7,6 +7,7 @@ class PreProccessor:
     urls_replace = True
     numbers_replace = True
     user_references_replace = True
+    hash_sign_replace = True
     stemming = True
     lemmatization = True
 
@@ -20,6 +21,8 @@ class PreProccessor:
                 self.numbers_replace = options["numbers_replace"]
             if options.has_key("user_references_replace"):
                 self.user_references_replace = options["user_references_replace"]
+            if options.has_key("hash_sign_replace"):
+                self.hash_sign_replace = options["hash_sign_replace"]
             if options.has_key("stemming"):
                 self.stemming = options["stemming"]
             if options.has_key("lemmatization"):
@@ -39,13 +42,15 @@ class PreProccessor:
 
     def perform(self, tweets):
         for indx, text in enumerate(tweets):
-            print(tweets[indx].text)
+            #print(tweets[indx].text)
             if self.urls_replace:
                 tweets[indx].text = self.__urls_replace(tweets[indx].text)
             if self.user_references_replace:
                 tweets[indx].text = self.__user_references_replace(tweets[indx].text)
             if self.numbers_replace:
                 tweets[indx].text = self.__numbers_replace(tweets[indx].text)
+            if self.hash_sign_replace:
+                tweets[indx].text = tweets[indx].text.replace("#","")
         return tweets
 
 #opt = {}

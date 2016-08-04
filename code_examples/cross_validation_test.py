@@ -20,4 +20,11 @@ scores = cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5)
 predicted = cross_validation.cross_val_predict(clf, iris.data, iris.target, cv=10)
 metrics = metrics.accuracy_score(iris.target, predicted)
 
+
+from sklearn.datasets import fetch_20newsgroups
+newsgroups_train = fetch_20newsgroups(subset='train',categories=['alt.atheism', 'talk.religion.misc'])
+
+scores = cross_validation.cross_val_score(clf, newsgroups_train.data, newsgroups_train.target, cv=5)
+
+
 test=1
