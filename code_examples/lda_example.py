@@ -26,5 +26,7 @@ model.fit(matrix)
 n_top_words = 10
 
 for i, topic_dist in enumerate(model.topic_word_):
-    topic_words = np.array(vocab)[np.argsort(topic_dist)][:-n_top_words:-1]
+    np_array_vocab =  np.array(vocab)
+    np_sorted_by_topic_dist = np.argsort(topic_dist)
+    topic_words = np_array_vocab[np_sorted_by_topic_dist][:-n_top_words:-1] # Slice take only n highest.
     print('Topic {}: {}'.format(i, ' '.join(topic_words)))
