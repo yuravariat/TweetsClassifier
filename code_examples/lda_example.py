@@ -2,7 +2,7 @@ from lda import lda
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 
 from classifier.data import DataAdapter
-from classifier.pre_processor import GetTextFromTweet
+from classifier.pre_processor import GetTextFromTweet, PreProccessor
 from pandas import np
 
 disease = 'hiv'
@@ -14,6 +14,10 @@ dataAdapter.create_data(disease)
 
 # 2. Load train data from files or cache
 trainData = dataAdapter.get_data(categories=categories, subset='train')
+
+# Postprocessing (urls, numbers and user references replacement)
+preproccessor = PreProccessor()
+preproccessor.perform(trainData.data)
 
 vectorizer = CountVectorizer(ngram_range=(1, 1), stop_words='english', preprocessor=GetTextFromTweet)
 matrix = vectorizer.fit_transform(trainData.data)
