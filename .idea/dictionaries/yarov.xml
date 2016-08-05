@@ -3,9 +3,11 @@
     <words>
       <w>dataset</w>
       <w>dont</w>
+      <w>emoji</w>
       <w>filenames</w>
       <w>multinomial</w>
       <w>ngrams</w>
+      <w>nltk</w>
       <w>scikit</w>
       <w>zlib</w>
     </words>

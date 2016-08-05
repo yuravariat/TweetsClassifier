@@ -14,7 +14,7 @@ from sklearn import tree, cross_validation
 from sklearn.ensemble import AdaBoostClassifier
 
 # our project packages
-from sympy.physics.quantum.circuitplot import np
+#from sympy.physics.quantum.circuitplot import np
 
 from classifier.data import DataAdapter
 from classifier.pre_processor import PreProccessor
@@ -63,6 +63,57 @@ class ClassifierFactory:
     __enable_part_of_day_transformer = True
     __enable_punctuation_transformer = True
 
+    def get_transformers(self):
+        transformers_list = []
+        if self.__enable_text_length_transformer:
+            text_length_transformer = TextLengthTransformer()
+            transformers_list.append(('text_length', text_length_transformer))
+        if self.__enable_url_transformer:
+            has_url_transformer = HasUrlTransformer()
+            transformers_list.append(('has_url', has_url_transformer))
+        if self.__enable_emoticons_transformer:
+            emoticons_transformer = HasEmoticonsTransformer()
+            transformers_list.append(('has_emoticons', emoticons_transformer))
+        if self.__enable_username_transformer:
+            username_transformer = UsernameTransformer()
+            transformers_list.append(('user_name', username_transformer))
+        if self.__enable_part_of_day_transformer:
+            part_of_day_transformer = PartOfDayTransformer()
+            transformers_list.append(('part_of_day', part_of_day_transformer))
+        if self.__enable_pos_transformer:
+            pos_transformer = PosTransformer()
+            transformers_list.append(('part_of_speech', pos_transformer))
+        if self.__enable_punctuation_transformer:
+            punctuation_transformer = PunctuationTransformer()
+            transformers_list.append(('punctuations', punctuation_transformer))
+        if self.__enable_ngrams_transformer:
+            # Tokenizer unigram and bigram tokens (ngram_range=(1, 2)). Stop words removed (stop_words='english')
+            count_vect = CountVectorizer(ngram_range=(1, 2), stop_words='english', preprocessor=GetTextFromTweet)
+            #tfidf_transformer = TfidfTransformer()
+            transformers_list.append(('ngram_tf_idf', Pipeline([
+                    ('counts', count_vect),
+                    #('tf_idf', tfidf_transformer)
+                ]))
+            )
+        print 'feature: ' + str([x[0] for x in transformers_list])
+        return transformers_list
+
+    def get_classifier(self):
+        __classifier = None
+        if self.classifier_type is ClassifierType.MultinomialNB:
+            __classifier = MultinomialNB()
+        if self.classifier_type is ClassifierType.SVM:
+            __classifier = SVC()
+        if self.classifier_type is ClassifierType.DecisionTree:
+            __classifier = tree.DecisionTreeClassifier()
+        if self.classifier_type is ClassifierType.RandomForest:
+            __classifier = RandomForestClassifier()
+        if self.classifier_type is ClassifierType.LogisticRegression:
+            __classifier = LogisticRegression()
+        if self.classifier_type is ClassifierType.AdaBoost:
+            __classifier = AdaBoostClassifier()
+        return __classifier
+
     def buildClassifier(self, train_data, classifier_type=None, categories=None, disease=None):
 
         print('start training classifier')
@@ -96,38 +147,7 @@ class ClassifierFactory:
 
         print('classifier algorithm: ' + str(self.classifier_type) )
 
-        transformers_list = []
-        if self.__enable_text_length_transformer:
-            text_length_transformer = TextLengthTransformer()
-            transformers_list.append(('text_length', text_length_transformer))
-        if self.__enable_url_transformer:
-            has_url_transformer = HasUrlTransformer()
-            transformers_list.append(('has_url', has_url_transformer))
-        if self.__enable_emoticons_transformer:
-            emoticons_transformer = HasEmoticonsTransformer()
-            transformers_list.append(('has_emoticons', emoticons_transformer))
-        if self.__enable_username_transformer:
-            username_transformer = UsernameTransformer()
-            transformers_list.append(('user_name', username_transformer))
-        if self.__enable_part_of_day_transformer:
-            part_of_day_transformer = PartOfDayTransformer()
-            transformers_list.append(('part_of_day', part_of_day_transformer))
-        if self.__enable_pos_transformer:
-            pos_transformer = PosTransformer()
-            transformers_list.append(('part_of_speech', pos_transformer))
-        if self.__enable_punctuation_transformer:
-            punctuation_transformer = PunctuationTransformer()
-            transformers_list.append(('punctuations', punctuation_transformer))
-        if self.__enable_ngrams_transformer:
-            # Tokenizer unigram and bigram tokens (ngram_range=(1, 2)). Stop words removed (stop_words='english')
-            count_vect = CountVectorizer(ngram_range=(1, 2), stop_words='english', preprocessor=GetTextFromTweet)
-            #tfidf_transformer = TfidfTransformer()
-            transformers_list.append(('ngram_tf_idf', Pipeline([
-                    ('counts', count_vect),
-                    #('tf_idf', tfidf_transformer)
-                ]))
-            )
-        print 'feature: ' + str([x[0] for x in transformers_list])
+        transformers_list = self.get_transformers()
 
         features = FeatureUnion(
             transformer_list=transformers_list,
@@ -163,19 +183,7 @@ class ClassifierFactory:
         #    print("OS error: {0}".format(inst))
         #################################################################################
 
-        __classifier = None
-        if self.classifier_type is ClassifierType.MultinomialNB:
-            __classifier = MultinomialNB()
-        if self.classifier_type is ClassifierType.SVM:
-            __classifier = SVC()
-        if self.classifier_type is ClassifierType.DecisionTree:
-            __classifier = tree.DecisionTreeClassifier()
-        if self.classifier_type is ClassifierType.RandomForest:
-            __classifier = RandomForestClassifier()
-        if self.classifier_type is ClassifierType.LogisticRegression:
-            __classifier = LogisticRegression()
-        if self.classifier_type is ClassifierType.AdaBoost:
-            __classifier = AdaBoostClassifier()
+        __classifier = self.get_classifier()
 
         pipeline = Pipeline([
           ('features', features),
@@ -211,8 +219,11 @@ clf = classifierBuilder.buildClassifier(disease=disease,train_data=trainData)
 
 # Evaluation with cross validation test
 print 'performing cross validation c=5 on train data'
-scores = cross_validation.cross_val_score(clf.classifier, trainData.data, trainData.target,
-                                          cv=5,scoring='precision_weighted')
+scores = cross_validation.cross_val_score(clf.classifier,
+                                          trainData.data,
+                                          trainData.target,
+                                          cv=5,
+                                          scoring='precision_weighted')
 scores_mean = scores.mean()
 print 'cross validation done'
 print 'scores: ' + str(scores)

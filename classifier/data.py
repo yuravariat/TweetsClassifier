@@ -48,7 +48,6 @@ class Tweet:
             self.sarcasm = segments[14]
 
 
-
 class DataAdapter:
 
     logger = logging.getLogger(__name__)
@@ -62,6 +61,11 @@ class DataAdapter:
 
     def create_data(self, disease):
         data_home = get_data_home()
+        cache_path = os.path.join(data_home, self.cache_name)
+
+        if os.path.exists(cache_path):
+            return
+
         # e.g. C:\Users\[user]\scikit_learn_data\hiv
         disease_path = os.path.join(data_home, disease)
         # e.g. C:\Users\[user]\scikit_learn_data\tweets\hiv
