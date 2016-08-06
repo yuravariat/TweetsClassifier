@@ -80,9 +80,9 @@ class ClassifierFactory:
         if self.__enable_part_of_day_transformer:
             part_of_day_transformer = PartOfDayTransformer()
             transformers_list.append(('part_of_day', part_of_day_transformer))
-        if self.__enable_pos_transformer:
-            pos_transformer = PosTransformer()
-            transformers_list.append(('part_of_speech', pos_transformer))
+        # if self.__enable_pos_transformer:
+            # pos_transformer = PosTransformer()
+            # transformers_list.append(('part_of_speech', pos_transformer))
         if self.__enable_punctuation_transformer:
             punctuation_transformer = PunctuationTransformer()
             transformers_list.append(('punctuations', punctuation_transformer))

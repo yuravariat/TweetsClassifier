@@ -102,23 +102,28 @@ class DataAdapter:
         for tweet in tweets_iterator:
             segments = str(tweet).split('\t')
 
-            tweet_id = segments[0]
-            query = segments[1]
-            disease = segments[2]
-            created_at = segments[3]
-            screen_name = segments[4]
-            text = segments[5]
-            description = segments[6]
-            location = segments[7]
-            timezone = segments[8]
-            user_id = segments[9]
-            coordinate = segments[10]
-            tweets_per_user = segments[11]
-            posted_by = segments[12]
+            '''
+            0 - tweet_id
+            1 - query
+            2 - disease
+            3 - created_at
+            4 - screen_name
+            5 - text
+            6 - description
+            7 - location
+            8 - timezone
+            9 - user_id
+            10 - coordinate
+            11 - tweets_per_user
+            12 - posted_by
+            13 - talk_about
+            14 - sarcasm
+            15 - retweeted
+            16 - user_name
+            '''
             talk_about = segments[13]
-            sarcasm = segments[14]
 
-            # classification category
+            # TODO: later the empty category tweets should be saved as prediction set
             if talk_about == '':
                 continue
 
@@ -264,14 +269,23 @@ class DataAdapter:
                      test=base.load_files(test_path, encoding='utf-8'))
 
         # turn tweet text to Tweet objects.
-        tweetsList = list()
+        train_tweets = list()
         for tweet in cache['train'].data:
-            tweetsList.append(Tweet(tweet))
-        cache['train'].data = tweetsList
-        tweetsList = list()
+            try:
+                tweet = tweet.encode('utf-8')
+                train_tweets.append(Tweet(tweet))
+            except UnicodeEncodeError as unicode_error:
+                print unicode_error.message
+        cache['train'].data = train_tweets
+
+        test_tweets = list()
         for tweet in cache['test'].data:
-            tweetsList.append(Tweet(tweet))
-        cache['test'].data = tweetsList
+            try:
+                tweet = tweet.encode('utf-8')
+                test_tweets.append(Tweet(tweet))
+            except UnicodeEncodeError as unicode_error:
+                print unicode_error.message
+        cache['test'].data = test_tweets
 
         compressed_content = codecs.encode(pickle.dumps(cache), 'zlib_codec')
 

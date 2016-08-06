@@ -1,23 +1,51 @@
+import os
+import nltk
 from pandas import DataFrame, np
 from sklearn.base import TransformerMixin
-import nltk
+from nltk.tag.perceptron import PerceptronTagger
+
+
+class PerceptronTaggerError(Exception):
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
 
 class PosTransformer(TransformerMixin):
+
+    _tagger = PerceptronTagger(False)
+    _nltk_paths = ['C:/Users/yarov/nltk_data', 'C:/Anaconda2/nltk_data']
+
+    def __init__(self):
+
+        loaded = False
+        for nltk_path in self._nltk_paths:
+            if os.path.exists(nltk_path):
+                full_nltk_path = os.path.join(nltk_path, 'taggers/averaged_perceptron_tagger/averaged_perceptron_tagger.pickle')
+                self._tagger.load('file:///{0}'.format(full_nltk_path))
+                loaded = True
+                break
+
+        if not loaded:
+            raise PerceptronTaggerError('The perceptron tagger was not found!')
 
     def transform(self, X, **transform_params):
 
         numpy_table = np.zeros((len(X), len(self.allTags)))
 
         for row_num, tweet in enumerate(X):
-            words = nltk.wordpunct_tokenize(tweet.text)
-            pos_window = nltk.pos_tag(words)
-            tag_fd = nltk.FreqDist(tag for (word, tag) in pos_window)
+            tokens = nltk.wordpunct_tokenize(tweet.text)
+            word_tags = self._tagger.tag(tokens)
+            tag_fd = nltk.FreqDist(tag for (word, tag) in word_tags)
             for tag in tag_fd:
                 if tag in self.allTags:
                     indexOfTag = self.allTags.index(tag)
                     if indexOfTag > -1:
                         # Proportion, how much part of speech appears in the text.
-                        numpy_table[row_num, indexOfTag] = tag_fd[tag]/len(words)
+                        numpy_table[row_num, indexOfTag] = (tag_fd[tag]/(len(tokens)*1.0))
 
         data_table = DataFrame(numpy_table, columns=self.allTags)
 
