@@ -56,8 +56,9 @@ class DataAdapter:
     test_folder = 'test'
     disease = None
 
-    def __init__(self, disease):
+    def __init__(self, disease, p_category):
         self.disease = disease
+        self._category = p_category
 
     def create_data(self, disease):
         data_home = get_data_home()
@@ -121,17 +122,27 @@ class DataAdapter:
             15 - retweeted
             16 - user_name
             '''
-            talk_about = segments[13]
+
+            category_map = \
+                {
+                'posted_by': 12,
+                'talk_about': 13,
+                'sarcasm': 14,
+                'retweeted': 15,
+                'user_name': 16
+            }
+
+            category = category_map[self._category]
 
             # TODO: later the empty category tweets should be saved as prediction set
-            if talk_about == '':
+            if category == '':
                 continue
 
             train_path = os.path.join(disease_path, self.train_folder)
             if not os.path.exists(train_path):
                 os.makedirs(train_path)
 
-            category_path = os.path.join(train_path, talk_about)
+            category_path = os.path.join(train_path, category)
             if not os.path.exists(category_path):
                 os.makedirs(category_path)
 

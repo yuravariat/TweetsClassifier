@@ -88,7 +88,7 @@ class ClassifierFactory:
             transformers_list.append(('punctuations', punctuation_transformer))
         if self.__enable_ngrams_transformer:
             # Tokenizer unigram and bigram tokens (ngram_range=(1, 2)). Stop words removed (stop_words='english')
-            count_vect = CountVectorizer(ngram_range=(1, 2), stop_words='english', preprocessor=GetTextFromTweet)
+            count_vect = CountVectorizer(ngram_range=(1, 3), stop_words='english', preprocessor=GetTextFromTweet)
             #tfidf_transformer = TfidfTransformer()
             transformers_list.append(('ngram_tf_idf', Pipeline([
                     ('counts', count_vect),
@@ -203,8 +203,9 @@ class ClassifierFactory:
 # ------------------------------------- classification area ---------------------------------
 
 disease = 'hiv'
-categories = ['celeb', 'dont_know', 'family', 'himself', 'knows', 'none', 'subject']
-dataAdapter = DataAdapter(disease)
+#categories = ['celeb', 'dont_know', 'family', 'himself', 'knows', 'none', 'subject']
+categories = ['organization', 'individual']
+dataAdapter = DataAdapter(disease, 'posted_by')
 
 # 1. Generate training set by splitting the input files multiple files (file per tweet)
 dataAdapter.create_data(disease)
@@ -214,7 +215,7 @@ trainData = dataAdapter.get_data(categories=categories, subset='train')
 
 # 3. Train classifier
 classifierBuilder = ClassifierFactory()
-clf = classifierBuilder.buildClassifier(disease=disease,train_data=trainData)
+clf = classifierBuilder.buildClassifier(classifier_type=ClassifierType.LogisticRegression, disease=disease,train_data=trainData)
 
 
 # Evaluation with cross validation test
