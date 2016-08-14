@@ -45,6 +45,23 @@ class Classifier:
     classifier = None
     labels = None
 
+class ClassifierSettings:
+
+    def __index__(self):
+        pass
+
+    enable_text_length_transformer = False
+    enable_url_transformer = False
+    enable_pos_transformer = False
+    enable_ngrams_transformer = False
+    enable_emoticons_transformer = False
+    enable_username_transformer = False
+    enable_part_of_day_transformer = False
+    enable_punctuation_transformer = False
+    train_data = None
+    classifier_type = None
+    categories = None
+    disease = None
 
 class ClassifierFactory:
 
@@ -53,40 +70,32 @@ class ClassifierFactory:
 
     annotated_data = None
     classifier_type = None
-
-    __enable_text_length_transformer = True
-    __enable_url_transformer = True
-    __enable_pos_transformer = True
-    __enable_ngrams_transformer = True
-    __enable_emoticons_transformer = True
-    __enable_username_transformer = True
-    __enable_part_of_day_transformer = True
-    __enable_punctuation_transformer = True
+    classifierSettings = None
 
     def get_transformers(self):
         transformers_list = []
-        if self.__enable_text_length_transformer:
+        if self.classifierSettings.enable_text_length_transformer:
             text_length_transformer = TextLengthTransformer()
             transformers_list.append(('text_length', text_length_transformer))
-        if self.__enable_url_transformer:
+        if self.classifierSettings.enable_url_transformer:
             has_url_transformer = HasUrlTransformer()
             transformers_list.append(('has_url', has_url_transformer))
-        if self.__enable_emoticons_transformer:
+        if self.classifierSettings.enable_emoticons_transformer:
             emoticons_transformer = HasEmoticonsTransformer()
             transformers_list.append(('has_emoticons', emoticons_transformer))
-        if self.__enable_username_transformer:
+        if self.classifierSettings.enable_username_transformer:
             username_transformer = UsernameTransformer()
             transformers_list.append(('user_name', username_transformer))
-        if self.__enable_part_of_day_transformer:
+        if self.classifierSettings.enable_part_of_day_transformer:
             part_of_day_transformer = PartOfDayTransformer()
             transformers_list.append(('part_of_day', part_of_day_transformer))
-        if self.__enable_pos_transformer:
+        if self.classifierSettings.enable_pos_transformer:
             pos_transformer = PosTransformer()
             transformers_list.append(('part_of_speech', pos_transformer))
-        if self.__enable_punctuation_transformer:
+        if self.classifierSettings.enable_punctuation_transformer:
             punctuation_transformer = PunctuationTransformer()
             transformers_list.append(('punctuations', punctuation_transformer))
-        if self.__enable_ngrams_transformer:
+        if self.classifierSettings.enable_ngrams_transformer:
             # Tokenizer unigram and bigram tokens (ngram_range=(1, 2)). Stop words removed (stop_words='english')
             count_vect = CountVectorizer(ngram_range=(1, 3), stop_words='english', preprocessor=GetTextFromTweet)
             #tfidf_transformer = TfidfTransformer()
@@ -114,20 +123,24 @@ class ClassifierFactory:
             __classifier = AdaBoostClassifier()
         return __classifier
 
-    def buildClassifier(self, train_data, classifier_type=None, categories=None, disease=None):
+    def buildClassifier(self, classifierSettings):
 
         print('start training classifier')
+        self.classifierSettings = classifierSettings
 
-        if classifier_type is None and self.classifier_type is None:
+        if self.classifierSettings.classifier_type is None and self.classifier_type is None:
             self.classifier_type = ClassifierType.MultinomialNB
 
-        if classifier_type is not None and self.classifier_type is None:
-            self.classifier_type = classifier_type
+        if self.classifierSettings.classifier_type is not None and self.classifier_type is None:
+            self.classifier_type = classifierSettings.classifier_type
 
         # Annotated data
-        self.annotated_data = train_data
-        print('train contains ' + str(len(train_data.data)) + ' tweets and ' + str(len(train_data.target_names)) +
-              ' categories: ' + str(train_data.target_names) )
+        self.annotated_data = classifierSettings.train_data
+
+        cats_with_counts = [(t_name,len([x for x in classifierSettings.train_data.target.tolist() if x == classifierSettings.train_data.target_names.index(t_name)])) for t_name in classifierSettings.train_data.target_names]
+        print('train contains ' + str(len(classifierSettings.train_data.data)) + ' tweets and ' +
+                str(len(classifierSettings.train_data.target_names)) +
+              ' categories: ' + str(cats_with_counts) )
 
         # Postprocessing (urls, numbers and user references replacement)
         preproccessor = PreProccessor()
@@ -168,15 +181,15 @@ class ClassifierFactory:
         #try:
         #    checkFeautureTable = features.fit(self.annotated_data.data)
         #    features_names = []
-        #    if self.__enable_text_length_transformer:
+        #    if self.classifierSettings.enable_text_length_transformer:
         #        features_names.append(text_length_transformer.get_feature_names())
-        #    if self.__enable_url_transformer:
+        #    if self.classifierSettings.enable_url_transformer:
         #        features_names.append(has_url_transformer.get_feature_names())
-        #    if self.__enable_emoticons_transformer:
+        #    if self.classifierSettings.enable_emoticons_transformer:
         #        features_names.append(emoticons_transformer.get_feature_names())
-        #    if self.__enable_pos_transformer:
+        #    if self.classifierSettings.enable_pos_transformer:
         #        features_names.append(pos_transformer.get_feature_names())
-        #    if self.__enable_ngrams_transformer:
+        #    if self.classifierSettings.enable_ngrams_transformer:
         #        features_names.append(count_vect.get_feature_names())
         #    numpyTable = checkFeautureTable.transform(self.annotated_data.data)
         #except Exception as inst:
@@ -199,41 +212,3 @@ class ClassifierFactory:
         classifier_obj.labels = self.annotated_data.target_names
 
         return classifier_obj
-
-# ------------------------------------- classification area ---------------------------------
-
-disease = 'hiv'
-#categories = ['celeb', 'dont_know', 'family', 'himself', 'knows', 'none', 'subject']
-categories = ['organization', 'individual']
-dataAdapter = DataAdapter(disease, 'posted_by')
-
-# 1. Generate training set by splitting the input files multiple files (file per tweet)
-dataAdapter.create_data(disease)
-
-# 2. Load train data from files or cache
-trainData = dataAdapter.get_data(categories=categories, subset='train')
-
-# 3. Train classifier
-classifierBuilder = ClassifierFactory()
-clf = classifierBuilder.buildClassifier(classifier_type=ClassifierType.LogisticRegression, disease=disease,train_data=trainData)
-
-
-# Evaluation with cross validation test
-print 'performing cross validation c=5 on train data'
-scores = cross_validation.cross_val_score(clf.classifier,
-                                          trainData.data,
-                                          trainData.target,
-                                          cv=5,
-                                          scoring='precision_weighted')
-scores_mean = scores.mean()
-print 'cross validation done'
-print 'scores: ' + str(scores)
-print 'scores_mean: ' + str(scores_mean)
-
-# Evaluation with splited data
-#testData = dataAdapter.get_data(categories=categories, subset='train')
-#predicted = clf.classifier.predict(testData)
-#precision = precision_score(testData.target, predicted, average='weighted')
-#recall = recall_score(testData.target, predicted, average='weighted')
-
-print('done!')

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import io
 import os
 import logging
 import pickle
@@ -26,26 +28,34 @@ class Tweet:
     posted_by = ''
     talk_about = ''
     sarcasm = ''
+    relevant = ''
 
-    def __init__(self, tweet_text=None):
+    def __init__(self, tweet_text=None,textOnlyTweets = False):
         if tweet_text is not None:
             segments = str(tweet_text).split('\t')
 
-            self.tweet_id = segments[0]
-            self.query = segments[1]
-            self.disease = segments[2]
-            self.created_at = segments[3]
-            self.screen_name = segments[4]
-            self.text = segments[5]
-            self.description = segments[6]
-            self.location = segments[7]
-            self.timezone = segments[8]
-            self.user_id = segments[9]
-            self.coordinate = segments[10]
-            self.tweets_per_user = segments[11]
-            self.posted_by = segments[12]
-            self.talk_about = segments[13]
-            self.sarcasm = segments[14]
+            try:
+                if textOnlyTweets:
+                    self.text = segments[0]
+                    self.relevant = segments[1] if len(segments) > 1 else 'not_relevant'
+                else:
+                    self.tweet_id = segments[0]
+                    self.query = segments[1]
+                    self.disease = segments[2]
+                    self.created_at = segments[3]
+                    self.screen_name = segments[4]
+                    self.text = segments[5]
+                    self.description = segments[6]
+                    self.location = segments[7]
+                    self.timezone = segments[8]
+                    self.user_id = segments[9]
+                    self.coordinate = segments[10]
+                    self.tweets_per_user = segments[11]
+                    self.posted_by = segments[12]
+                    self.talk_about = segments[13]
+                    self.sarcasm = segments[14]
+            except:
+                print "Unexpected error: ", pickle.sys.exc_info()[0] , " tweet_text=" + tweet_text
 
 
 class DataAdapter:
@@ -55,22 +65,27 @@ class DataAdapter:
     train_folder = "train"
     test_folder = 'test'
     disease = None
+    _cat_col_name = ''
+    _cl_cut = ''
+    _textOnlyTweets = False
 
-    def __init__(self, disease, p_category):
+    def __init__(self, disease,cl_cut, p_category, textOnlyTweets = False):
         self.disease = disease
-        self._category = p_category
+        self._cl_cut = '\\' + cl_cut if cl_cut is not None else ''
+        self._cat_col_name = p_category
+        self._textOnlyTweets = textOnlyTweets
 
-    def create_data(self, disease):
+    def create_data(self):
         data_home = get_data_home()
-        cache_path = os.path.join(data_home, self.cache_name)
+        cache_path = os.path.join(data_home, 'cache\\' + self.disease + self._cl_cut + '\\' + self.cache_name)
 
         if os.path.exists(cache_path):
             return
 
         # e.g. C:\Users\[user]\scikit_learn_data\hiv
-        disease_path = os.path.join(data_home, disease)
+        disease_path = os.path.join(data_home, self.disease)
         # e.g. C:\Users\[user]\scikit_learn_data\tweets\hiv
-        tweets_path = os.path.join(data_home, 'tweets', disease)
+        tweets_path = os.path.join(data_home, 'tweets', self.disease + self._cl_cut)
         if not os.path.exists(tweets_path):
             return
         '''
@@ -91,65 +106,83 @@ class DataAdapter:
 
         tweets = []
         for file_path in file_paths:
-            with open(file_path, 'r') as f:
+            line_num = 0
+            with codecs.open(file_path, 'r') as f:
                 for line in f:
-                    tweets.append(line)
+                    try:
+                        tweets.append(line)
+                        line_num = line_num+1
+                    except:
+                        print "Unexpected error in line " + line_num + ":", pickle.sys.exc_info()[0]
             f.closed
+
+        category_map = \
+            {
+                'posted_by': 12,
+                'talk_about': 13,
+                'sarcasm': 14,
+                'retweeted': 15,
+                'user_name': 16,
+                'relevancy': 1
+            }
+
+        train_path = os.path.join(data_home, self.train_folder + '\\' + self.disease + self._cl_cut )
+        if not os.path.exists(train_path):
+            os.makedirs(train_path)
 
         counter = 0
         tweets_iterator = iter(tweets)
         # skip the first line - column names
         next(tweets_iterator)
         for tweet in tweets_iterator:
-            segments = str(tweet).split('\t')
+             if tweet !='':
+                segments = str(tweet).split('\t')
 
-            '''
-            0 - tweet_id
-            1 - query
-            2 - disease
-            3 - created_at
-            4 - screen_name
-            5 - text
-            6 - description
-            7 - location
-            8 - timezone
-            9 - user_id
-            10 - coordinate
-            11 - tweets_per_user
-            12 - posted_by
-            13 - talk_about
-            14 - sarcasm
-            15 - retweeted
-            16 - user_name
-            '''
+                '''
+                0 - tweet_id
+                1 - query
+                2 - disease
+                3 - created_at
+                4 - screen_name
+                5 - text
+                6 - description
+                7 - location
+                8 - timezone
+                9 - user_id
+                10 - coordinate
+                11 - tweets_per_user
+                12 - posted_by
+                13 - talk_about
+                14 - sarcasm
+                15 - retweeted
+                16 - user_name
 
-            category_map = \
-                {
-                'posted_by': 12,
-                'talk_about': 13,
-                'sarcasm': 14,
-                'retweeted': 15,
-                'user_name': 16
-            }
+                text-only-tweet
+                1 - relevancy
+                '''
 
-            category = category_map[self._category]
+                category = segments[category_map[self._cat_col_name]].strip()
+                category_path = os.path.join(train_path, str(category))
+                if not os.path.exists(category_path):
+                    os.makedirs(category_path)
 
-            # TODO: later the empty category tweets should be saved as prediction set
-            if category == '':
-                continue
+                # TODO: later the empty category tweets should be saved as prediction set
+                if category == '':
+                    continue
 
-            train_path = os.path.join(disease_path, self.train_folder)
-            if not os.path.exists(train_path):
-                os.makedirs(train_path)
+                file_path = os.path.join(category_path, str(counter) + '.txt')
+                file_to_remove = None
+                with codecs.open(file_path, "w", "utf-8") as text_file:
+                    try:
+                        text_file.write(tweet)
+                    except:
+                        file_to_remove = file_path
+                        print "Unexpected error in " + file_path + ":", pickle.sys.exc_info()[0]
 
-            category_path = os.path.join(train_path, category)
-            if not os.path.exists(category_path):
-                os.makedirs(category_path)
+                if file_to_remove is not None:
+                    os.remove(file_to_remove)
 
-            file_path = os.path.join(category_path, str(counter) + '.txt')
-            with open(file_path, "w") as text_file:
-                text_file.write(tweet)
-            counter += 1
+                counter += 1
 
     def get_data(self, subset='train', categories=None, shuffle=True, random_state=42):
         """Load the filenames and data from the 20 newsgroups dataset.
@@ -194,8 +227,8 @@ class DataAdapter:
         """
 
         data_home = get_data_home()
-        cache_path = os.path.join(data_home, self.cache_name)
-        target_path = os.path.join(data_home, self.disease)
+        cache_path = os.path.join(data_home, 'cache\\' + self.disease + self._cl_cut + '\\' + self.cache_name)
+        target_path = os.path.join(data_home, self.train_folder + '\\' + self.disease + self._cl_cut )
         cache = None
         if os.path.exists(cache_path):
             try:
@@ -264,8 +297,8 @@ class DataAdapter:
         return data
 
     def get_cache(self, target_path, cache_path):
-        train_path = os.path.join(target_path, self.train_folder)
-        test_path = os.path.join(target_path, self.test_folder)
+        train_path = target_path
+        #test_path = '' # no need we do cross validation. os.path.join(target_path, self.test_folder)
 
         if not os.path.exists(target_path):
             os.makedirs(target_path)
@@ -273,32 +306,36 @@ class DataAdapter:
         if not os.path.exists(train_path):
             os.makedirs(train_path)
 
-        if not os.path.exists(test_path):
-            os.makedirs(test_path)
+        #if not os.path.exists(test_path):
+        #    os.makedirs(test_path)
 
-        cache = dict(train=base.load_files(train_path, encoding='utf-8'),
-                     test=base.load_files(test_path, encoding='utf-8'))
+        cache = dict(train=base.load_files(train_path, encoding='utf-8'))
+                     #test=base.load_files(test_path, encoding='utf-8'))
 
         # turn tweet text to Tweet objects.
         train_tweets = list()
         for tweet in cache['train'].data:
             try:
                 tweet = tweet.encode('utf-8')
-                train_tweets.append(Tweet(tweet))
+                if tweet != '':
+                    train_tweets.append(Tweet(tweet,self._textOnlyTweets))
             except UnicodeEncodeError as unicode_error:
                 print unicode_error.message
         cache['train'].data = train_tweets
 
         test_tweets = list()
-        for tweet in cache['test'].data:
-            try:
-                tweet = tweet.encode('utf-8')
-                test_tweets.append(Tweet(tweet))
-            except UnicodeEncodeError as unicode_error:
-                print unicode_error.message
-        cache['test'].data = test_tweets
+        #for tweet in cache['test'].data:
+        #    try:
+        #        tweet = tweet.encode('utf-8')
+        #        test_tweets.append(Tweet(tweet,self._textOnlyTweets))
+        #    except UnicodeEncodeError as unicode_error:
+        #        print unicode_error.message
+        #cache['test'].data = test_tweets
 
         compressed_content = codecs.encode(pickle.dumps(cache), 'zlib_codec')
+
+        if not os.path.exists(cache_path.replace(self.cache_name,'')):
+            os.makedirs(cache_path.replace(self.cache_name,''))
 
         with open(cache_path, 'wb') as f:
             f.write(compressed_content)
