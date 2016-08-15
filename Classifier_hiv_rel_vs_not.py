@@ -3,6 +3,7 @@ from sklearn import cross_validation
 from ClassifierFactory import ClassifierFactory, ClassifierSettings, ClassifierType
 from classifier.data import DataAdapter
 
+predict_mode = True
 
 disease = 'hiv'
 categories = ['relevant', 'not_relevant']
@@ -30,23 +31,23 @@ classifierSettings.enable_part_of_day_transformer = False
 classifierSettings.enable_punctuation_transformer = False
 clf = classifierBuilder.buildClassifier(classifierSettings)
 
+if not predict_mode:
+    # Evaluation with cross validation test
+    print 'performing cross validation c=5 on train data'
+    scores = cross_validation.cross_val_score(clf.classifier,
+                                              trainData.data,
+                                              trainData.target,
+                                              cv=5,
+                                              scoring='precision_weighted')
+    scores_mean = scores.mean()
+    print 'cross validation done'
+    print 'scores: ' + str(scores)
+    print 'scores_mean: ' + str(scores_mean)
 
-# Evaluation with cross validation test
-print 'performing cross validation c=5 on train data'
-scores = cross_validation.cross_val_score(clf.classifier,
-                                          trainData.data,
-                                          trainData.target,
-                                          cv=5,
-                                          scoring='precision_weighted')
-scores_mean = scores.mean()
-print 'cross validation done'
-print 'scores: ' + str(scores)
-print 'scores_mean: ' + str(scores_mean)
-
-# Evaluation with splited data
-#testData = dataAdapter.get_data(categories=categories, subset='train')
-#predicted = clf.classifier.predict(testData)
-#precision = precision_score(testData.target, predicted, average='weighted')
-#recall = recall_score(testData.target, predicted, average='weighted')
+else:
+    # make prediction
+    testData = dataAdapter.get_unclassified_data()
+    predicted = clf.classifier.predict(testData)
+    print ('predict done')
 
 print('done!')

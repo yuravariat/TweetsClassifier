@@ -343,3 +343,29 @@ class DataAdapter:
         shutil.rmtree(target_path)
 
         return cache
+
+    def get_unclassified_data(self):
+        source_path = os.path.join(get_data_home(), 'tweets_unclassified\\' + self.disease)
+        file_paths = []
+        for root, directories, files in os.walk(source_path):
+            for filename in files:
+                file_path = os.path.join(root, filename)
+                file_paths.append(file_path)
+        print 'unclassified data loaded from ' + str(file_paths)
+
+        tweets = []
+        for file_path in file_paths:
+            line_num = 0
+            with codecs.open(file_path, 'r') as f:
+                for line in f:
+                    if line_num>0:
+                        try:
+                            tweets.append(Tweet(line))
+                            line_num += 1
+                        except:
+                            print "Unexpected error in line " + line_num + ":", pickle.sys.exc_info()[0]
+                    else:
+                        line_num += 1
+            f.closed
+        print 'unclassified tweets loaded ' + str(len(tweets))
+        return tweets
