@@ -53,7 +53,9 @@ class Tweet:
                     self.tweets_per_user = segments[11]
                     self.posted_by = segments[12]
                     self.talk_about = segments[13]
-                    self.sarcasm = segments[14]
+                    self.sarcasm = segments[14].strip()
+                    if len(segments)>15:
+                        self.relevant = segments[15].strip()
             except:
                 print "Unexpected error: ", pickle.sys.exc_info()[0] , " tweet_text=" + tweet_text
 
