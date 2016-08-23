@@ -53,7 +53,7 @@ class Tweet:
                     self.tweets_per_user = segments[11]
                     self.posted_by = segments[12]
                     self.talk_about = segments[13]
-                    self.sarcasm = segments[14].strip()
+                    self.sarcasm = segments[14].strip() if segments[14].strip() == 'sarcasm' else 'not_sarcasm'
                     if len(segments)>15:
                         self.relevant = segments[15].strip()
             except:
@@ -164,6 +164,10 @@ class DataAdapter:
                 '''
 
                 category = segments[category_map[self._cat_col_name]].strip()
+                if self._cat_col_name == 'sarcasm' and category=='':
+                    category = 'not_sarcasm'
+                if self._cat_col_name == 'talk_about' and category=='':
+                    category = 'others'
                 category_path = os.path.join(train_path, str(category))
                 if not os.path.exists(category_path):
                     os.makedirs(category_path)
