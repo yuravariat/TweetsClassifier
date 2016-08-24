@@ -9,9 +9,8 @@ from ClassifierFactory import ClassifierFactory, ClassifierSettings, ClassifierT
 from classifier.data import DataAdapter
 from time import time
 
-predict_mode = True
-
-disease = 'hiv'
+disease = 'fibro'
+predict_mode = False
 categories = ['organization', 'individual']
 cl_cut = 'ind_vs_org'
 dataAdapter = DataAdapter(disease,cl_cut,'posted_by')

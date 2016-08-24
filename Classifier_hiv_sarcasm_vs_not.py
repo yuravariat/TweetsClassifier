@@ -9,9 +9,8 @@ from ClassifierFactory import ClassifierFactory, ClassifierSettings, ClassifierT
 from classifier.data import DataAdapter
 from time import time
 
-predict_mode = False
-
 disease = 'hiv'
+predict_mode = False
 categories = ['sarcasm', 'not_sarcasm']
 cl_cut = 'sarcasm_vs_not'
 dataAdapter = DataAdapter(disease,cl_cut,'sarcasm')

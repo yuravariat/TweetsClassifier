@@ -7,9 +7,8 @@ from sklearn.datasets import get_data_home
 from ClassifierFactory import ClassifierFactory, ClassifierSettings, ClassifierType
 from classifier.data import DataAdapter, Tweet
 
-predict_mode = True
-
 disease = 'hiv'
+predict_mode = False
 categories = ['relevant', 'not_relevant']
 cl_cut = 'rel_vs_not'
 dataAdapter = DataAdapter(disease,cl_cut, 'relevancy', textOnlyTweets=True)
