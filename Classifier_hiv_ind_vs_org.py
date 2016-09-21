@@ -11,7 +11,7 @@ from time import time
 
 disease = 'fibro'
 predict_mode = False
-categories = ['organization', 'individual']
+categories = ['Organization', 'Individual']
 cl_cut = 'ind_vs_org'
 dataAdapter = DataAdapter(disease,cl_cut,'posted_by')
 

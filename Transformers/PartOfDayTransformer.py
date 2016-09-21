@@ -29,5 +29,6 @@ class PartOfDayTransformer(TransformerMixin):
                 if 22 < dt.hour < 5: # Night
                     return 4
             except Exception as inst:
-                print("OS error: {0}".format(inst))
+                ttt =1
+                #print("OS error: {0}".format(inst))
         return 0;

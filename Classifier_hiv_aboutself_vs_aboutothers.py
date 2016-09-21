@@ -9,7 +9,7 @@ from ClassifierFactory import ClassifierFactory, ClassifierSettings, ClassifierT
 from classifier.data import DataAdapter
 from time import time
 
-disease = 'asthma'
+disease = 'fibro'
 predict_mode = False
 categories = ['himself', 'others']
 cl_cut = 'aboutself_vs_aboutothers'

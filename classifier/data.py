@@ -11,6 +11,11 @@ from sklearn.utils import validation
 from sklearn.datasets import get_data_home
 from sklearn.datasets import base
 
+# encoding=utf8
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 
 class Tweet:
     tweet_id = ''
@@ -53,7 +58,8 @@ class Tweet:
                     self.tweets_per_user = segments[11]
                     self.posted_by = segments[12]
                     self.talk_about = segments[13]
-                    self.sarcasm = segments[14].strip() if segments[14].strip() == 'sarcasm' else 'not_sarcasm'
+                    if len(segments) > 14:
+                        self.sarcasm = segments[14].strip() if segments[14].strip() == 'sarcasm' else 'not_sarcasm'
                     if len(segments)>15:
                         self.relevant = segments[15].strip()
             except:
@@ -178,7 +184,7 @@ class DataAdapter:
 
                 file_path = os.path.join(category_path, str(counter) + '.txt')
                 file_to_remove = None
-                with codecs.open(file_path, "w", "utf-8") as text_file:
+                with codecs.open(file_path, "w", encoding="utf-8") as text_file:
                     try:
                         text_file.write(tweet)
                     except:
