@@ -9,11 +9,11 @@ from ClassifierFactory import ClassifierFactory, ClassifierSettings, ClassifierT
 from classifier.data import DataAdapter
 from time import time
 
-disease = 'fibro'
-predict_mode = False
-categories = ['Organization', 'Individual']
-cl_cut = 'ind_vs_org'
-dataAdapter = DataAdapter(disease,cl_cut,'posted_by')
+disease = 'asthma'
+predict_mode = True
+categories = ['himself', 'others']
+cl_cut = 'aboutself_vs_aboutothers'
+dataAdapter = DataAdapter(disease, cl_cut, 'talk_about')
 
 # 1. Generate training set by splitting the input files multiple files (file per tweet)
 dataAdapter.create_data()
@@ -29,7 +29,7 @@ classifierSettings.classifier_type = ClassifierType.LogisticRegression
 classifierSettings.disease = disease
 classifierSettings.enable_text_length_transformer = True
 classifierSettings.enable_url_transformer = True
-classifierSettings.enable_pos_transformer = True
+classifierSettings.enable_pos_transformer = False
 classifierSettings.enable_emoticons_transformer = True
 classifierSettings.enable_username_transformer = True
 classifierSettings.enable_part_of_day_transformer = True
@@ -65,7 +65,7 @@ else:
         ranTime = time() - t0
         print ('progress ' + str(round((i+1)/float(len(data_chunks)) * 100,2)) + '% last_predict_time=' + str(ranTime))
         for j in range(len(chunk)):
-            testData[i*chunk_size+j].posted_by = str(clf.labels[predicted[j]])
+            testData[i*chunk_size+j].talk_about = str(clf.labels[predicted[j]])
 
     print ('predict done')
 
@@ -92,10 +92,10 @@ else:
                            testData[i].user_id,
                            testData[i].coordinate,
                            testData[i].tweets_per_user,
-                           testData[i].posted_by,
-                           testData[i].talk_about,
-                           testData[i].sarcasm,
-                           testData[i].relevant)
+                           testData[i].posted_by.strip(),
+                           testData[i].talk_about.strip(),
+                           testData[i].sarcasm.strip(),
+                           testData[i].relevant.strip())
                 text_file.write(tweet.encode("utf-8"))
             except Exception as e:
                 print("Exception!!! tweet " + str(i)  + " e=" + e.message)

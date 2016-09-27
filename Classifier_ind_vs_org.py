@@ -9,11 +9,11 @@ from ClassifierFactory import ClassifierFactory, ClassifierSettings, ClassifierT
 from classifier.data import DataAdapter
 from time import time
 
-disease = 'fibro'
-predict_mode = False
-categories = ['himself', 'others']
-cl_cut = 'aboutself_vs_aboutothers'
-dataAdapter = DataAdapter(disease, cl_cut, 'talk_about')
+disease = 'asthma'
+predict_mode = True
+categories = ['organization', 'individual']
+cl_cut = 'ind_vs_org'
+dataAdapter = DataAdapter(disease,cl_cut,'posted_by')
 
 # 1. Generate training set by splitting the input files multiple files (file per tweet)
 dataAdapter.create_data()

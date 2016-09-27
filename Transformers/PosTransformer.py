@@ -17,7 +17,7 @@ class PerceptronTaggerError(Exception):
 class PosTransformer(TransformerMixin):
 
     _tagger = PerceptronTagger(False)
-    _nltk_paths = ['C:/Users/yarov/nltk_data', 'C:/Anaconda2/nltk_data']
+    _nltk_paths = ['C:/Users/yurav/nltk_data', 'C:/Anaconda2/nltk_data']
 
     def __init__(self):
 
