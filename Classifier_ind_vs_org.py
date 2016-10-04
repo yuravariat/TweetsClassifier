@@ -3,6 +3,7 @@ import os
 
 from sklearn import cross_validation
 from sklearn.datasets import get_data_home
+from sklearn.metrics import precision_score, recall_score, f1_score
 from toolz import partition
 
 from ClassifierFactory import ClassifierFactory, ClassifierSettings, ClassifierType
@@ -10,7 +11,7 @@ from classifier.data import DataAdapter
 from time import time
 
 disease = 'asthma'
-predict_mode = True
+predict_mode = False
 categories = ['organization', 'individual']
 cl_cut = 'ind_vs_org'
 dataAdapter = DataAdapter(disease,cl_cut,'posted_by')
@@ -18,8 +19,9 @@ dataAdapter = DataAdapter(disease,cl_cut,'posted_by')
 # 1. Generate training set by splitting the input files multiple files (file per tweet)
 dataAdapter.create_data()
 
-# 2. Load train data from files or cache
+# 2. Load data from files or cache
 trainData = dataAdapter.get_data(categories=categories, subset='train')
+testData = dataAdapter.get_data(categories=categories, subset='test')
 
 # 3. Train classifier
 classifierBuilder = ClassifierFactory()
@@ -38,6 +40,13 @@ classifierSettings.enable_ngrams_transformer = True
 clf = classifierBuilder.buildClassifier(classifierSettings)
 
 if not predict_mode:
+
+    results = clf.classifier.predict(testData.data)
+    precision = precision_score(y_true=testData.target, y_pred=results)
+    recall = recall_score(y_true=testData.target, y_pred=results)
+    f1 = f1_score(y_true=testData.target, y_pred=results)
+
+
     # Evaluation with cross validation test
     print 'performing cross validation c=5 on train data'
     scores = cross_validation.cross_val_score(clf.classifier,

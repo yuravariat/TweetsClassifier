@@ -83,30 +83,9 @@ class DataAdapter:
         self._cat_col_name = p_category
         self._textOnlyTweets = textOnlyTweets
 
-    def create_data(self):
-        data_home = get_data_home()
-        cache_path = os.path.join(data_home, 'cache\\' + self.disease + self._cl_cut + '\\' + self.cache_name)
-
-        if os.path.exists(cache_path):
-            return
-
-        # e.g. C:\Users\[user]\scikit_learn_data\hiv
-        disease_path = os.path.join(data_home, self.disease)
-        # e.g. C:\Users\[user]\scikit_learn_data\tweets\hiv
-        tweets_path = os.path.join(data_home, 'tweets', self.disease + self._cl_cut)
-        if not os.path.exists(tweets_path):
-            return
-        '''
-        *** Manual process:
-        Save annotation files as 'Text (MS-DOS)(*.txt)', e.g. tweets1.txt (all annotation files should keep the same format)
-
-        *** Automated process:
-        1. Get file names from the C:\Users\[user]\scikit_learn_data\tweets\hiv
-        2. For each file read all tweets line by line (only those where the category is not empty)
-        3. For each tweet generate a unique file
-        '''
+    def _load_tweets(self, path):
         file_paths = []
-        for root, directories, files in os.walk(tweets_path):
+        for root, directories, files in os.walk(path):
             for filename in files:
                 file_path = os.path.join(root, filename)
                 file_paths.append(file_path)
@@ -124,6 +103,9 @@ class DataAdapter:
                         print "Unexpected error in line " + line_num + ":", pickle.sys.exc_info()[0]
             f.closed
 
+        return tweets
+
+    def _generate_singular_tweet_files(self, tweets, target_path):
         category_map = \
             {
                 'posted_by': 12,
@@ -134,47 +116,42 @@ class DataAdapter:
                 'relevancy': 1
             }
 
-        train_path = os.path.join(data_home, self.train_folder + '\\' + self.disease + self._cl_cut )
-        if not os.path.exists(train_path):
-            os.makedirs(train_path)
+        '''
+        0 - tweet_id
+        1 - query
+        2 - disease
+        3 - created_at
+        4 - screen_name
+        5 - text
+        6 - description
+        7 - location
+        8 - timezone
+        9 - user_id
+        10 - coordinate
+        11 - tweets_per_user
+        12 - posted_by
+        13 - talk_about
+        14 - sarcasm
+        15 - retweeted
+        16 - user_name
+
+        text-only-tweet
+        1 - relevancy
+        '''
 
         counter = 0
         tweets_iterator = iter(tweets)
         # skip the first line - column names
         next(tweets_iterator)
         for tweet in tweets_iterator:
-             if tweet !='':
+            if tweet != '':
                 segments = str(tweet).split('\t')
-
-                '''
-                0 - tweet_id
-                1 - query
-                2 - disease
-                3 - created_at
-                4 - screen_name
-                5 - text
-                6 - description
-                7 - location
-                8 - timezone
-                9 - user_id
-                10 - coordinate
-                11 - tweets_per_user
-                12 - posted_by
-                13 - talk_about
-                14 - sarcasm
-                15 - retweeted
-                16 - user_name
-
-                text-only-tweet
-                1 - relevancy
-                '''
-
                 category = segments[category_map[self._cat_col_name]].strip()
-                if self._cat_col_name == 'sarcasm' and category=='':
+                if self._cat_col_name == 'sarcasm' and category == '':
                     category = 'not_sarcasm'
-                if self._cat_col_name == 'talk_about' and category=='':
+                if self._cat_col_name == 'talk_about' and category == '':
                     category = 'others'
-                category_path = os.path.join(train_path, str(category))
+                category_path = os.path.join(target_path, str(category))
                 if not os.path.exists(category_path):
                     os.makedirs(category_path)
 
@@ -196,51 +173,49 @@ class DataAdapter:
 
                 counter += 1
 
-    def get_data(self, subset='train', categories=None, shuffle=True, random_state=42):
-        """Load the filenames and data from the 20 newsgroups dataset.
-
-        Read more in the :ref:`User Guide <20newsgroups>`.
-
-        Parameters
-        ----------
-        subset: 'train' or 'test', 'all', optional
-            Select the dataset to load: 'train' for the training set, 'test'
-            for the test set, 'all' for both, with shuffled ordering.
-
-        data_home: optional, default: None
-            Specify a download and cache folder for the datasets. If None,
-            all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
-
-        categories: None or collection of string or unicode
-            If None (default), load all the categories.
-            If not None, list of category names to load (other categories
-            ignored).
-
-        shuffle: bool, optional
-            Whether or not to shuffle the data: might be important for models that
-            make the assumption that the samples are independent and identically
-            distributed (i.i.d.), such as stochastic gradient descent.
-
-        random_state: numpy random number generator or seed integer
-            Used to shuffle the dataset.
-
-        remove: tuple
-            May contain any subset of ('headers', 'footers', 'quotes'). Each of
-            these are kinds of text that will be detected and removed from the
-            newsgroup posts, preventing classifiers from overfitting on
-            metadata.
-
-            'headers' removes newsgroup headers, 'footers' removes blocks at the
-            ends of posts that look like signatures, and 'quotes' removes lines
-            that appear to be quoting another post.
-
-            'headers' follows an exact standard; the other filters are not always
-            correct.
-        """
-
+    def create_data(self):
         data_home = get_data_home()
         cache_path = os.path.join(data_home, 'cache\\' + self.disease + self._cl_cut + '\\' + self.cache_name)
-        target_path = os.path.join(data_home, self.train_folder + '\\' + self.disease + self._cl_cut )
+
+        if os.path.exists(cache_path):
+            return
+
+        # e.g. C:\Users\[user]\scikit_learn_data\hiv
+        # disease_path = os.path.join(data_home, self.disease)
+        # e.g. C:\Users\[user]\scikit_learn_data\tweets\hiv
+        tweets_path = os.path.join(data_home, 'tweets', self.disease + self._cl_cut)
+        if not os.path.exists(tweets_path):
+            return
+        '''
+        *** Manual process:
+        Save annotation files as 'Text (MS-DOS)(*.txt)', e.g. tweets1.txt (all annotation files should keep the same format)
+
+        *** Automated process:
+        1. Get file names from the C:\Users\[user]\scikit_learn_data\tweets\hiv
+        2. For each file read all tweets line by line (only those where the category is not empty)
+        3. For each tweet generate a unique file
+        '''
+
+        train_path = os.path.join(tweets_path, self.train_folder)
+        train_output_path = os.path.join(data_home, self.train_folder,  self.disease + self._cl_cut)
+        if not os.path.exists(train_output_path):
+            os.makedirs(train_output_path)
+
+        test_path = os.path.join(tweets_path, self.test_folder)
+        test_output_path = os.path.join(data_home, self.test_folder,  self.disease + self._cl_cut)
+        if not os.path.exists(test_output_path):
+            os.makedirs(test_output_path)
+
+        train_tweets = self._load_tweets(train_path)
+        self._generate_singular_tweet_files(train_tweets, train_output_path)
+        test_tweets = self._load_tweets(test_path)
+        self._generate_singular_tweet_files(test_tweets, test_output_path)
+
+    def get_data(self, subset='train', categories=None, shuffle=True, random_state=42):
+        data_home = get_data_home()
+        cache_path = os.path.join(data_home, 'cache\\' + self.disease + self._cl_cut + '\\' + self.cache_name)
+        train_path = os.path.join(data_home, self.train_folder, self.disease + self._cl_cut)
+        test_path = os.path.join(data_home, self.test_folder, self.disease + self._cl_cut)
         cache = None
         if os.path.exists(cache_path):
             try:
@@ -256,7 +231,7 @@ class DataAdapter:
                 print(e)
 
         if cache is None:
-            cache = self.get_cache(target_path, cache_path)
+            cache = self.get_cache(train_path=train_path, test_path=test_path, cache_path=cache_path)
 
         if subset in ('train', 'test'):
             data = cache[subset]
@@ -308,21 +283,9 @@ class DataAdapter:
 
         return data
 
-    def get_cache(self, target_path, cache_path):
-        train_path = target_path
-        #test_path = '' # no need we do cross validation. os.path.join(target_path, self.test_folder)
-
-        if not os.path.exists(target_path):
-            os.makedirs(target_path)
-
-        if not os.path.exists(train_path):
-            os.makedirs(train_path)
-
-        #if not os.path.exists(test_path):
-        #    os.makedirs(test_path)
-
-        cache = dict(train=base.load_files(train_path, encoding='utf-8'))
-                     #test=base.load_files(test_path, encoding='utf-8'))
+    def get_cache(self, train_path, test_path, cache_path):
+        cache = dict(train=base.load_files(train_path, encoding='utf-8'),
+                     test=base.load_files(test_path, encoding='utf-8'))
 
         # turn tweet text to Tweet objects.
         train_tweets = list()
@@ -336,23 +299,28 @@ class DataAdapter:
         cache['train'].data = train_tweets
 
         test_tweets = list()
-        #for tweet in cache['test'].data:
-        #    try:
-        #        tweet = tweet.encode('utf-8')
-        #        test_tweets.append(Tweet(tweet,self._textOnlyTweets))
-        #    except UnicodeEncodeError as unicode_error:
-        #        print unicode_error.message
-        #cache['test'].data = test_tweets
+        for tweet in cache['test'].data:
+            try:
+                tweet = tweet.encode('utf-8')
+                if tweet != '':
+                    test_tweets.append(Tweet(tweet, self._textOnlyTweets))
+            except UnicodeEncodeError as unicode_error:
+                print unicode_error.message
+        cache['test'].data = test_tweets
 
         compressed_content = codecs.encode(pickle.dumps(cache), 'zlib_codec')
 
-        if not os.path.exists(cache_path.replace(self.cache_name,'')):
-            os.makedirs(cache_path.replace(self.cache_name,''))
+        if not os.path.exists(cache_path.replace(self.cache_name, '')):
+            os.makedirs(cache_path.replace(self.cache_name, ''))
 
         with open(cache_path, 'wb') as f:
             f.write(compressed_content)
 
-        shutil.rmtree(target_path)
+        if not os.path.exists(cache_path):
+            os.makedirs(cache_path)
+
+        # TODO: When the cache is ready, need to delete all generated files
+        # shutil.rmtree(cache_path)
 
         return cache
 
